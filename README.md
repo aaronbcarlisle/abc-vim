@@ -1,2 +1,2 @@
 # vimfiles
-Vim setup for both Linux and Windows.
+Personal Vim setup for both Linux and Windows.

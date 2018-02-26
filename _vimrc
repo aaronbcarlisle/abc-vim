@@ -251,7 +251,7 @@ Bundle 'nvie/vim-flake8'
 
 " Hybrid Theme
 set t_Co=256
-colorscheme hybrid
+colorscheme molokai
 set background=dark
 
 " BufExplorer

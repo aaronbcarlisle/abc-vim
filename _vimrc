@@ -258,6 +258,9 @@ set background=dark
 nnoremap <Leader>bb :ToggleBufExplorer<CR>
 let g:bufExplorerSplitHorzSize=1
 
+" Flake8
+let g:flake8_quickfix_height=15
+
 " Octol
 let g:cpp_class_scope_highlight=1
 let g:cpp_experimental_template_highlight=1

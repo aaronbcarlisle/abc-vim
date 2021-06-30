@@ -3,15 +3,13 @@ Vim Setup
 
 Personal Vim setup for both Linux and Windows built and inspired from https://github.com/irrigger/ir-vim.
 
-## Setup Steps
+# Installation
 
-1. ### Vundle
-    - **Linux:** `git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim`
-    - **Windows:** `git clone https://github.com/VundleVim/Vundle.vim.git %USERPROFILE%/vimfiles/bundle/Vundle.vim`
+## Windows
 
-2. ### Vimfiles
-    - **Linux:** `git clone https://github.com/abcarlisle/vim.git ~/.vim && mv ~/.vim/.vimrc ~/.vimrc`
-    - **Windows:** `git clone https://github.com/abcarlisle/vim.git %USERPROFILE%\vimfiles && move %USERPROFILE%\vimfiles\.vimrc %USERPROFILE%\.vimrc`
+    git clone https://github.com/abcarlisle/vim.git %USERPROFILE%\vimfiles && move %USERPROFILE%\vimfiles\.vimrc %USERPROFILE%\.vimrc && git clone https://github.com/VundleVim/Vundle.vim.git %USERPROFILE%/vimfiles/bundle/Vundle.vim && vim -c ":PluginInstall"
 
-3. ### Plugins
-    - **Vundle:** `:PluginInstall` or `<leader>p`
+## Linux
+
+    git clone https://github.com/abcarlisle/vim.git ~/.vim && move ~/.vim/.vimrc ~ && git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim && vim -c ":PluginInstall"
+

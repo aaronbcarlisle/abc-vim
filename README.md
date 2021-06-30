@@ -6,7 +6,7 @@ My personal Vim setup for Linux and Windows. Built and inspired from https://git
 ---
 
 # Install
-Vundle is included in the following install commands. If Vundle is already installed it'll move to installing the plugins in the `.vimrc` file.
+Vundle is included in the following install commands. If Vundle is already installed it'll move to installing the plugins in the `.vimrc` file after the initial clone and setup.
 
 ### Windows
     cd %USERPROFILE% && git clone https://github.com/abcarlisle/abc-vim.git vimfiles && move vimfiles\.vimrc .vimrc && git clone https://github.com/VundleVim/Vundle.vim.git %USERPROFILE%/vimfiles/bundle/Vundle.vim & vim +PluginInstall +qall 

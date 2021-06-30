@@ -1,14 +1,18 @@
-" -- Start Up Settings ---
+" -- Start Up Settings --
+
+" turn off filetype and caomptaible for Vundle setup
+set nocompatible
+filetype off
 
 " system prep for unix/windows platforms
 if has ("win32")
-    set rtp+=%USERPROFILE%\vimfiles\bundle\Vundle.vim
-    call vundle#rc('%USERPROFILE%\vimfiles\bundle\')
+    set rtp+=$USERPROFILE/vimfiles/bundle/Vundle.vim
+    call vundle#rc('$USERPROFILE/vimfiles/bundle/')
 
     " re-map swap, backup and undo directories
-    set directory=%USERPROFILE%\vimfiles\swap//
-    set backupdir=%USERPROFILE%\vimfiles\backup//
-    set undodir=%USERPROFILE%\vimfiles\undo//
+    set directory=$USERPROFILE/vimfiles/swap//
+    set backupdir=$USERPROFILE/vimfiles/backup//
+    set undodir=$USERPROFILE/vimfiles/undo//
 
     set clipboard=unnamed
     set shell=cmd
@@ -30,16 +34,39 @@ elseif has ("unix")
     set backupdir=~/.vim/backup//
     set undodir=~/.vim/undo//
 
-    " this ensures the clipboard works properly on Linux
+    " this ensures the cliboard buffer works with linux terminal
     set clipboard=unnamedplus
     set shell=/bin/sh
 endif
 
+" -- Vundle Setup --
+
+call vundle#begin()
+
+Plugin 'VundleVim/Vundle.vim'
+
+" some helpful plugins
+Plugin 'tpope/vim-fugitive'
+Plugin 'scrooloose/nerdcommenter'
+Plugin 'w0ng/vim-hybrid'
+Plugin 'jlanzarotta/bufexplorer'
+Plugin 'octol/vim-cpp-enhanced-highlight'
+Plugin 'nvie/vim-flake8'
+Plugin 'jiangmiao/auto-pairs'
+
+call vundle#end()
+
+" -- Basic Settings ---
+
+" turn on filetype detection and syntax highlighting
+filetype on
+syntax on
+
+" enable loading indent file for filetype
+filetype plugin indent on
+
 " set the mapleader to be comma ',' for faster keybinds
 let mapleader=','
-
-" turn on syntax highlighting
-syntax on
 
 " set 80 for PEP8 and 120 for C++ and SDK APIs
 set colorcolumn=80,120
@@ -59,14 +86,9 @@ augroup filetypedetect
     au! BufRead,BufNewFile *.ms	setf maxscript
 augroup END
 
-" Additional python syntax highlighting
-let python_highlight_all=1
-
 " cursorline settings
 set cursorline
 highlight Cursorline cterm=None
-
-" -- Basic Settings ---
 
 " enable mouse mode
 set mouse=a
@@ -114,8 +136,7 @@ set wildmenu
 set complete+=,k
 
 " ignore some file extensions
-set wildignore+=*.pyc
-set wildignore+=*.swp
+set wildignore+=*.pyc,*.autosave,*~,*.exr,*.png,*.gif,*.bcd,*.jpg,*.jpeg,*.mp4,*.pc2,*.aus,*.hip,*.abc,*.xcf,*.pdf,*.tgz,*.tar,*.gz
 
 " increase history
 set history=10000
@@ -123,7 +144,7 @@ set history=10000
 " increase number of undos
 set undolevels=10000
 
-" let cursor go everywhere
+" set cursor to go everywhere
 set virtualedit=all
 
 " search while typing
@@ -141,6 +162,7 @@ set viminfo='1000,h
 " always show status line
 set laststatus=2
 set statusline+=%F
+
 
 " this removes the characters between split windows
 set fillchars="-"
@@ -215,7 +237,7 @@ set foldnestmax=10 "deepest fold is 10 levels
 set nofoldenable "dont fold by default
 set foldlevel=1 "this is just what i use
 
-" -- Key Bindings ---
+" -- Key Bindings --
 
 " write/quit keybinds
 nnoremap <Leader>w :w!<CR>
@@ -264,42 +286,21 @@ endif
 vnoremap < <gv
 vnoremap > >gv
 
-" -- Plugins --
-
-" handle vundle
-" call vundle#begin()
-
-" Plugin 'VundleVim/Vundle.vim'
-
-" essential plugins
-" Plugin 'scrooloose/nerdcommenter'
-" Plugin 'w0ng/vim-hybrid'
-" Plugin 'jlanzarotta/bufexplorer'
-" Plugin 'octol/vim-cpp-enhanced-highlight'
-" Plugin 'nvie/vim-flake8'
-" Plugin 'vim-airline/vim-airline'
-" Plugin 'jiangmiao/auto-pairs'
-
-" call vundle#end()
-
-" turn on filetype dection after vundle block
-filetype on
-
 " modify and set the hybrid colorscheme
 set t_Co=256
 set background=dark
 colorscheme hybrid
 
+nnoremap <Leader>bb :ToggleBufExplorer<CR>
+
 " -- Plugin Settings --
 
+" Additional python syntax highlighting
+let python_highlight_all=1
+
 " set bufexplorer keybinds
-nnoremap <Leader>bb :ToggleBufExplorer<CR>
 let g:bufExplorerSplitHorzSize=1
 
 " set octol settings for C++
 let g:cpp_class_scope_highlight=1
 let g:cpp_experimental_template_highlight=1
-
-" vim-airline settings for better status/tabline display
-let g:airline#extensions#tabline#tab_min_count=2
-let g:airline#extensions#tabline#buffer_min_count=2

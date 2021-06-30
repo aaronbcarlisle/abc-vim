@@ -163,7 +163,6 @@ set viminfo='1000,h
 set laststatus=2
 set statusline+=%F
 
-
 " this removes the characters between split windows
 set fillchars="-"
 

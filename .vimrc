@@ -272,12 +272,13 @@ vnoremap > >gv
 " Plugin 'VundleVim/Vundle.vim'
 
 " essential plugins
-Plugin 'scrooloose/nerdcommenter'
-Plugin 'w0ng/vim-hybrid'
-Plugin 'jlanzarotta/bufexplorer'
-Plugin 'octol/vim-cpp-enhanced-highlight'
-Plugin 'nvie/vim-flake8'
-Plugin 'vim-airline/vim-airline'
+" Plugin 'scrooloose/nerdcommenter'
+" Plugin 'w0ng/vim-hybrid'
+" Plugin 'jlanzarotta/bufexplorer'
+" Plugin 'octol/vim-cpp-enhanced-highlight'
+" Plugin 'nvie/vim-flake8'
+" Plugin 'vim-airline/vim-airline'
+" Plugin 'jiangmiao/auto-pairs'
 
 " call vundle#end()
 
@@ -300,5 +301,5 @@ let g:cpp_class_scope_highlight=1
 let g:cpp_experimental_template_highlight=1
 
 " vim-airline settings for better status/tabline display
-let g:airline#extensions#tabline#tab_min_count = 2
-let g:airline#extensions#tabline#buffer_min_count = 2
+let g:airline#extensions#tabline#tab_min_count=2
+let g:airline#extensions#tabline#buffer_min_count=2

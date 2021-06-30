@@ -1,4 +1,4 @@
-ABC Vim Setup
+ABC Vim
 ================================
 
 My personal Vim setup for Linux and Windows. Built and inspired from https://github.com/irrigger/ir-vim.

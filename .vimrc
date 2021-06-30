@@ -43,14 +43,14 @@ endif
 
 call vundle#begin()
 
-" some helpful plugins
-Plugin 'tpope/vim-fugitive'
-Plugin 'preservim/nerdcommenter'
-Plugin 'w0ng/vim-hybrid'
+" some useful plugins
 Plugin 'jlanzarotta/bufexplorer'
-Plugin 'octol/vim-cpp-enhanced-highlight'
-Plugin 'nvie/vim-flake8'
 Plugin 'jiangmiao/auto-pairs'
+Plugin 'nvie/vim-flake8'
+Plugin 'octol/vim-cpp-enhanced-highlight'
+Plugin 'preservim/nerdcommenter'
+Plugin 'tpope/vim-fugitive'
+Plugin 'w0ng/vim-hybrid'
 
 call vundle#end()
 

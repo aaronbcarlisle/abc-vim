@@ -2,13 +2,13 @@
 
 " system prep for unix/windows platforms
 if has ("win32")
-    set rtp+=~/vimfiles/bundle/Vundle.vim
-    call vundle#rc('~/vimfiles/bundle/')
+    set rtp+=%USERPROFILE%\vimfiles\bundle\Vundle.vim
+    call vundle#rc('%USERPROFILE%\vimfiles\bundle\')
 
     " re-map swap, backup and undo directories
-    set directory=~/vimfiles/swap//
-    set backupdir=~/vimfiles/backup//
-    set undodir=~/vimfiles/undo//
+    set directory=%USERPROFILE%\vimfiles\swap//
+    set backupdir=%USERPROFILE%\vimfiles\backup//
+    set undodir=%USERPROFILE%\vimfiles\undo//
 
     set clipboard=unnamed
     set shell=cmd

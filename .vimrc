@@ -1,18 +1,19 @@
-" ----------------------------------------------------- Start Up Settings ---- "
+" -- Start Up Settings ---
 
-"  system prep
+" system prep for unix/windows platforms
 if has ("win32")
-    set rtp+=$USERPROFILE/vimfiles/bundle/Vundle.vim
-    call vundle#rc('$USERPROFILE/vimfiles/bundle/')
+    set rtp+=~/vimfiles/bundle/Vundle.vim
+    call vundle#rc('~/vimfiles/bundle/')
 
-    set directory=$USERPROFILE/vimfiles/swap//
-    set backupdir=$USERPROFILE/vimfiles/backup//
-    set undodir=$USERPROFILE/vimfiles/undo//
+    " re-map swap, backup and undo directories
+    set directory=~/vimfiles/swap//
+    set backupdir=~/vimfiles/backup//
+    set undodir=~/vimfiles/undo//
 
     set clipboard=unnamed
     set shell=cmd
 
-    " Gvim
+    " set some default gvim settings
     if has("gui_running")
         set guifont=Lucida_Console:h10
         set showtabline=0
@@ -24,39 +25,36 @@ elseif has ("unix")
     set rtp+=~/.vim/bundle/Vundle.vim
     call vundle#rc()
 
+    " re-map swap, backup and undo directories
     set directory=~/.vim/swap//
     set backupdir=~/.vim/backup//
     set undodir=~/.vim/undo//
 
+    " this ensures the clipboard works properly on Linux
     set clipboard=unnamedplus
     set shell=/bin/sh
 endif
 
-" set the mapleader
+" set the mapleader to be comma ',' for faster keybinds
 let mapleader=','
 
-" Syntax highlighing
+" turn on syntax highlighting
 syntax on
 
-" Try to detect filetypes
-filetype on
-
-" set python max line width
-set colorcolumn=80
+" set 80 for PEP8 and 120 for C++ and SDK APIs
+set colorcolumn=80,120
 highlight ColorColumn ctermbg=DarkGray
-
-" Enable loading indent file for filetype
-filetype plugin indent on
 
 " turn on line numbers
 set number
 
 " autosource vim on save
-augroup reload_vimrc " {
+augroup reload_vimrc
    autocmd!
    autocmd BufWritePost $MYVIMRC source $MYVIMRC
-augroup END " }
+augroup END
 
+" detect maxscript files
 augroup filetypedetect
     au! BufRead,BufNewFile *.ms	setf maxscript
 augroup END
@@ -68,100 +66,124 @@ let python_highlight_all=1
 set cursorline
 highlight Cursorline cterm=None
 
-let g:airline#extensions#tabline#tab_min_count = 2
-let g:airline#extensions#tabline#buffer_min_count = 2
-
-" -------------------------------------------------------- Basic Settings ---- "
+" -- Basic Settings ---
 
 " enable mouse mode
 set mouse=a
-" Make command line one line high
+
+" make command line one line high
 set ch=1
-" Keep 3 lines when scrolling
+
+" keep 3 lines when scrolling
 set scrolloff=3
-" Always set autoindenting on
+
+" always set autoindenting on
 set autoindent
-" Turn off erroring and beeping
+
+" turn off error bells
 set noerrorbells
-" Show title in console title bar
+
+" show title in console title bar
 set title
-" Don't jump to first character when paging
+
+" don't jump to first character when paging
 set nostartofline
-" Start,indent,eol
+
+" set backspace character value
 set backspace=2
-" Show matching <> (html mainly) as well
+
+" show matching <> (html mainly) as well
 set matchpairs+=<:>
-" Jump to matching brace immediately after insert
+
+" jump to matching brace immediately after insert
 set showmatch
-" Time vim will sit on the matching brace
+
+" time vim will sit on the matching brace
 set matchtime=3
-" Abbreviate messages
+
+" abbreviate messages
 set shortmess=atI
-" Highlight search items
+
+" highlight search items
 set hlsearch
-" Tab complete commands
+
+" tab complete commands
 set wildmenu
-" Complete from a Dictionary if possible
+
+" complete from a dictionary if possible
 set complete+=,k
-" List longest first. Don't know if I want this
-set wildmode=list:longest,full
-" Whoever wanted to modify a .pyc?
+
+" ignore some file extensions
 set wildignore+=*.pyc
 set wildignore+=*.swp
-" Commandline remembrance
+
+" increase history
 set history=10000
-" Give me lots of Undos
+
+" increase number of undos
 set undolevels=10000
-" Let my cursor go everywhere
+
+" let cursor go everywhere
 set virtualedit=all
-" Search as I type
+
+" search while typing
 set incsearch
+
 " Use the / instead of \
 set shellslash
-" No word wrap
+
+" no word wrap
 set nowrap
-" Settings for vim to remember stuff on startup :help viminfo
+
+" remember vim history on startup
 set viminfo='1000,h
-" Always show status line
+
+" always show status line
 set laststatus=2
 set statusline+=%F
-" This removes the characters between split windows (and some other junk)
+
+" this removes the characters between split windows
 set fillchars="-"
-" This allows vim to work with buffers much more liberally. So no warnings when switching modified buffers
+
+" this allows vim to work with buffers much more liberally. So no warnings when switching modified buffers
 set hidden
+
 " Persistent undos
-"set undofile
-" What information to save when creating a session.
+set undofile
+
+" set information to save when creating a session
 set sessionoptions=buffers,resize,winpos,winsize
-" Setting the language to everything NOT American English.
+
+" set the language to everything NOT American English.
 set spelllang=en_gb,en_nx,en_au,en_ca
-" Ensure that all my auto formatting is minimal
+
+" ensure that all auto-formatting is minimal
 set formatoptions=""
 
+" these are set up at the recommendation of Steve Losh's 'Learn Vimscript the Hardway'
 if has("autocmd")
-   " I've set up these groups at the recommendation of Steve Losh's
-   " Learn Vimscript the Hardway
+
+   " automatically delete trailing white spaces
    augroup clear_whitespace
-       " Automatically delete trailing white spaces
        autocmd!
        autocmd BufEnter,BufRead,BufWrite * silent! %s/[\r \t]\+$//
        autocmd BufEnter *.php :%s/[ \t\r]\+$//e
    augroup END
 
+   " set current directory to that of the opened files
    augroup set_syntax
-       " Set current directory to that of the opened files
        autocmd!
        autocmd BufEnter * silent! :syntax on
    augroup END
 
+   " set current directory to that of the opened files
    augroup set_working_path
-       " Set current directory to that of the opened files
        autocmd!
        autocmd BufEnter,BufWrite * silent! lcd %:p:h
    augroup END
 
+   " set some filtype stuff up
    augroup set_filetypes
-       " Set some filtype stuff up
        autocmd!
        autocmd BufRead,BufNewFile *.ma setf mel
        autocmd BufRead,BufNewFile SConstruct setf python
@@ -169,98 +191,114 @@ if has("autocmd")
        autocmd BufNewFile,BufRead *.z* setlocal filetype=zsh
    augroup END
 
+   " filetype specific tabbing
    augroup set_tabbing
-       " Filetype specific tabbing
        autocmd!
        autocmd FileType * setlocal ts=4 sts=4 sw=4 noexpandtab cindent
        autocmd FileType python,vim,vimrc setlocal ts=4 sts=4 sw=4 expandtab
    augroup END
 
+   " set default textwidth
    augroup set_text_width
-       " Set default textwidth
        autocmd!
        autocmd BufEnter * let b:textwidth=80
        autocmd Filetype python let b:textwidth=79
    augroup END
 endif
 
-" Echo current file path and put in middle mouse buffer
+" echo current file path and put in middle mouse buffer
 noremap <Leader>f :let @*=expand('%:p')<CR>:echom @*<CR>
 
 " folding settings
-set foldmethod=indent   "fold based on indent
-set foldnestmax=10      "deepest fold is 10 levels
-set nofoldenable        "dont fold by default
-set foldlevel=1         "this is just what i use
+set foldmethod=indent "fold based on indent
+set foldnestmax=10 "deepest fold is 10 levels
+set nofoldenable "dont fold by default
+set foldlevel=1 "this is just what i use
 
-" ---------------------------------------------------------- Key Bindings ---- "
+" -- Key Bindings ---
 
-" some leader shortcuts
+" write/quit keybinds
 nnoremap <Leader>w :w!<CR>
 nnoremap <Leader>q :q<CR>
+
+" pane split keybinds
 nnoremap <Leader>v :vsplit<CR>
 nnoremap <Leader>h :sp<CR>
-" perforce checkout
-nnoremap <Leader>p :!p4 edit %:t<CR>
 
-" Clear highlights with spacebar
+" clear highlights with spacebar
 noremap <silent> <Space> :nohlsearch <CR>
 
-" Allow me to scroll horizontally
+" add keybind for horizontal scroll
 noremap <silent> <leader>o 30zl
 noremap <silent> <leader>i 30zh
 
-" inoremap kj <es
+" add keybind for syntax highlighting toggle
 noremap <leader>sy :if exists("g:syntax_on") <Bar> syntax off <Bar> else <Bar> syntax on <Bar> endif <CR>c>
 
-"" Make j and k work the way you expect
+" make j and k to be more vim like
 nnoremap j gj
 nnoremap k gk
 vnoremap j gj
 vnoremap k gk
 
-" Navigation between windows
+" setup navigation to be more Vim like
 nnoremap <C-J> <C-W>j
 nnoremap <C-K> <C-W>k
 nnoremap <C-H> <C-W>h
 nnoremap <C-L> <C-W>l
 
-" Fast edit the .vimrc file using ,x
+" fast edit the .vimrc file using ,x
 nnoremap <Leader>x :tabedit $MYVIMRC<CR>
 
-" hotkey for running python
+" fast install Plugins
+nnoremap <Leader>p :PluginInstall<CR>
+
+" setup Python execution hotkey
 if has ("win32")
     nnoremap <Leader>e :!python %<CR>
-    "nnoremap <Leader>e :!"C:/Program Files/Autodesk/Maya2016/bin/mayapy.exe" %<CR>
 elseif has ("unix")
     nnoremap <Leader>e :!/usr/bin/env python %<CR>
 endif
 
-" Reselect visual block afte indent/outdent
+" reselect visual block after indent/outdent
 vnoremap < <gv
 vnoremap > >gv
 
-" ------------------------------------------------------- Plugin Settings ---- "
+" -- Plugins --
 
-" PlUGINS
-Bundle 'scrooloose/nerdcommenter'
-Bundle 'w0ng/vim-hybrid'
-Bundle 'jlanzarotta/bufexplorer'
-Bundle 'octol/vim-cpp-enhanced-highlight'
-Bundle 'nvie/vim-flake8'
+" handle vundle
+" call vundle#begin()
 
-" Hybrid Theme
+" Plugin 'VundleVim/Vundle.vim'
+
+" essential plugins
+Plugin 'scrooloose/nerdcommenter'
+Plugin 'w0ng/vim-hybrid'
+Plugin 'jlanzarotta/bufexplorer'
+Plugin 'octol/vim-cpp-enhanced-highlight'
+Plugin 'nvie/vim-flake8'
+Plugin 'vim-airline/vim-airline'
+
+" call vundle#end()
+
+" turn on filetype dection after vundle block
+filetype on
+
+" modify and set the hybrid colorscheme
 set t_Co=256
-colorscheme molokai
 set background=dark
+colorscheme hybrid
 
-" BufExplorer
+" -- Plugin Settings --
+
+" set bufexplorer keybinds
 nnoremap <Leader>bb :ToggleBufExplorer<CR>
 let g:bufExplorerSplitHorzSize=1
 
-" Flake8
-let g:flake8_quickfix_height=15
-
-" Octol
+" set octol settings for C++
 let g:cpp_class_scope_highlight=1
 let g:cpp_experimental_template_highlight=1
+
+" vim-airline settings for better status/tabline display
+let g:airline#extensions#tabline#tab_min_count = 2
+let g:airline#extensions#tabline#buffer_min_count = 2

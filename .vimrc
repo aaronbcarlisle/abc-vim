@@ -1,6 +1,6 @@
 " -- Start Up Settings ---
 
-" turn off filetype and caomptaible for Vundle setup
+" turn off filetype and compatible for Vundle setup
 set nocompatible
 filetype off
 

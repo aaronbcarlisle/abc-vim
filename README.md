@@ -1,7 +1,7 @@
 ABC Vim Setup
 ================================
 
-Personal Vim setup for both Linux and Windows built and inspired from https://github.com/irrigger/ir-vim.
+My personal Vim setup for Linux and Windows. Built and inspired from https://github.com/irrigger/ir-vim.
 
 # Installation
 

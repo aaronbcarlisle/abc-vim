@@ -1,6 +1,6 @@
-" -- Start Up Settings --
+" -- Start Up Settings ---
 
-" initial settings for Vundle
+" turn off filetype and caomptaible for Vundle setup
 set nocompatible
 filetype off
 
@@ -59,8 +59,8 @@ call vundle#end()
 " -- Basic Settings ---
 
 " turn on filetype detection and syntax highlighting
-filetype on
 syntax on
+filetype on
 
 " enable loading indent file for filetype
 filetype plugin indent on
@@ -79,11 +79,6 @@ set number
 augroup reload_vimrc
    autocmd!
    autocmd BufWritePost $MYVIMRC source $MYVIMRC
-augroup END
-
-" detect maxscript files
-augroup filetypedetect
-    au! BufRead,BufNewFile *.ms	setf maxscript
 augroup END
 
 " cursorline settings
@@ -129,13 +124,15 @@ set shortmess=atI
 " highlight search items
 set hlsearch
 
-" tab complete commands
-set wildmenu
-
-" complete from a dictionary if possible
+" completion setup
 set complete+=,k
 
-" ignore some file extensions
+" tab completion
+set wildmenu
+set wildmode=longest,list,full
+
+" ignore setup
+set wildignorecase
 set wildignore+=*.pyc,*.autosave,*~,*.exr,*.png,*.gif,*.bcd,*.jpg,*.jpeg,*.mp4,*.pc2,*.aus,*.hip,*.abc,*.xcf,*.pdf,*.tgz,*.tar,*.gz
 
 " increase history
@@ -166,7 +163,7 @@ set statusline+=%F
 " this removes the characters between split windows
 set fillchars="-"
 
-" this allows vim to work with buffers much more liberally. So no warnings when switching modified buffers
+" this allows vim to work with buffers so no warnings when switching modified buffers
 set hidden
 
 " Persistent undos
@@ -236,7 +233,7 @@ set foldnestmax=10 "deepest fold is 10 levels
 set nofoldenable "dont fold by default
 set foldlevel=1 "this is just what i use
 
-" -- Key Bindings --
+" -- Key Bindings ---
 
 " write/quit keybinds
 nnoremap <Leader>w :w!<CR>
@@ -290,6 +287,7 @@ set t_Co=256
 set background=dark
 colorscheme hybrid
 
+" set keybind for bufexplorer toggle
 nnoremap <Leader>bb :ToggleBufExplorer<CR>
 
 " -- Plugin Settings --

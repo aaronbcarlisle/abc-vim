@@ -11,5 +11,5 @@ Personal Vim setup for both Linux and Windows built and inspired from https://gi
 
 ## Linux
 
-    git clone https://github.com/abcarlisle/vim.git ~/.vim && mv ~/.vim/.vimrc ~ && git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim & vim -c ":PluginInstall | q"
+    git clone https://github.com/abcarlisle/abc-vim.git ~/.vim && mv ~/.vim/.vimrc ~ && git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim & vim -c ":PluginInstall | q"
 

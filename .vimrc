@@ -45,7 +45,7 @@ call vundle#begin()
 
 " some helpful plugins
 Plugin 'tpope/vim-fugitive'
-Plugin 'scrooloose/nerdcommenter'
+Plugin 'preservim/nerdcommenter'
 Plugin 'w0ng/vim-hybrid'
 Plugin 'jlanzarotta/bufexplorer'
 Plugin 'octol/vim-cpp-enhanced-highlight'

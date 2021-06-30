@@ -43,8 +43,6 @@ endif
 
 call vundle#begin()
 
-Plugin 'VundleVim/Vundle.vim'
-
 " some helpful plugins
 Plugin 'tpope/vim-fugitive'
 Plugin 'scrooloose/nerdcommenter'

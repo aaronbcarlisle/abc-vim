@@ -34,27 +34,34 @@ elseif has ("unix")
     set backupdir=~/.vim/backup//
     set undodir=~/.vim/undo//
 
-    " this ensures the cliboard buffer works with linux terminal
+    " this ensures the clipboard buffer works with linux terminal
     set clipboard=unnamedplus
     set shell=/bin/sh
 endif
 
-" -- Vundle Setup --
 
-call vundle#begin()
+if !has ("pycharm")
+    " -- Vundle Setup --
 
-" some useful plugins
-Plugin 'jlanzarotta/bufexplorer'
-Plugin 'jiangmiao/auto-pairs'
-Plugin 'nvie/vim-flake8'
-Plugin 'octol/vim-cpp-enhanced-highlight'
-Plugin 'preservim/nerdcommenter'
-Plugin 'tpope/vim-fugitive'
-Plugin 'w0ng/vim-hybrid'
+    call vundle#begin()
 
-call vundle#end()
+    " some useful plugins
+    Plugin 'jlanzarotta/bufexplorer'
+    Plugin 'jiangmiao/auto-pairs'
+    Plugin 'nvie/vim-flake8'
+    Plugin 'octol/vim-cpp-enhanced-highlight'
+    Plugin 'preservim/nerdcommenter'
+    Plugin 'tpope/vim-fugitive'
+    Plugin 'w0ng/vim-hybrid'
+
+    call vundle#end()
+endif
 
 " -- Basic Settings ---
+
+" set encoding
+set encoding=utf-8
+set fileencoding=utf-8
 
 " turn on filetype detection and syntax highlighting
 syntax on
@@ -70,8 +77,9 @@ let mapleader=','
 set colorcolumn=80,120
 highlight ColorColumn ctermbg=DarkGray
 
-" turn on line numbers
+" turn on line numbers (with relative line numbers for easier movement)
 set number
+set relativenumber
 
 " autosource vim on save
 augroup reload_vimrc
@@ -85,6 +93,23 @@ highlight Cursorline cterm=None
 
 " enable mouse mode
 set mouse=a
+
+" Cursor shape configuration for different modes (console/terminal)
+" This makes the cursor change shape based on the mode you're in
+if !has("gui_running")
+    " Insert mode - vertical bar (thin line cursor)
+    let &t_SI = "\e[6 q"
+    " Replace mode - underline cursor
+    let &t_SR = "\e[4 q"
+    " Normal mode - block cursor (full block)
+    let &t_EI = "\e[2 q"
+
+    " Reset cursor when exiting vim
+    augroup RestoreCursor
+        autocmd!
+        autocmd VimLeave * let &t_me="\e[0 q"
+    augroup END
+endif
 
 " make command line one line high
 set ch=1
@@ -122,8 +147,8 @@ set shortmess=atI
 " highlight search items
 set hlsearch
 
-" completion setup
-set complete+=,k
+" completion setup (add dictionary completion)
+set complete+=k
 
 " tab completion
 set wildmenu
@@ -145,6 +170,10 @@ set virtualedit=all
 " search while typing
 set incsearch
 
+" smart case-insensitive search (case-insensitive unless capital letter used)
+set ignorecase
+set smartcase
+
 " Use the / instead of \
 set shellslash
 
@@ -154,12 +183,12 @@ set nowrap
 " remember vim history on startup
 set viminfo='1000,h
 
-" always show status line
+" always show status line with useful information
 set laststatus=2
-set statusline+=%F
+set statusline=%F%m%r%h%w\ [%{&ff}]\ [%Y]\ [%p%%]\ [Line:\ %l/%L,\ Col:\ %c]
 
-" this removes the characters between split windows
-set fillchars="-"
+" this removes the characters between split windows (use vert for vertical splits)
+set fillchars=vert:\ ,fold:-
 
 " this allows vim to work with buffers so no warnings when switching modified buffers
 set hidden
@@ -236,6 +265,7 @@ set foldlevel=1 "this is just what i use
 " write/quit keybinds
 nnoremap <Leader>w :w!<CR>
 nnoremap <Leader>q :q<CR>
+nnoremap <Leader>bd :bd<CR>
 
 " pane split keybinds
 nnoremap <Leader>v :vsplit<CR>
@@ -249,7 +279,10 @@ noremap <silent> <leader>o 30zl
 noremap <silent> <leader>i 30zh
 
 " add keybind for syntax highlighting toggle
-noremap <leader>sy :if exists("g:syntax_on") <Bar> syntax off <Bar> else <Bar> syntax on <Bar> endif <CR>c>
+noremap <leader>sy :if exists("g:syntax_on") <Bar> syntax off <Bar> else <Bar> syntax on <Bar> endif <CR>
+
+" toggle relative line numbers
+nnoremap <leader>rn :set relativenumber!<CR>
 
 " make j and k to be more vim like
 nnoremap j gj
@@ -264,10 +297,7 @@ nnoremap <C-H> <C-W>h
 nnoremap <C-L> <C-W>l
 
 " fast edit the .vimrc file using ,x
-nnoremap <Leader>x :tabedit $MYVIMRC<CR>
-
-" fast install Plugins
-nnoremap <Leader>p :PluginInstall<CR>
+nnoremap <Leader>x :e ~/.vimrc<CR>
 
 " setup Python execution hotkey
 if has ("win32")
@@ -280,22 +310,28 @@ endif
 vnoremap < <gv
 vnoremap > >gv
 
-" modify and set the hybrid colorscheme
-set t_Co=256
-set background=dark
-colorscheme hybrid
+if !has ("pycharm")
 
-" set keybind for bufexplorer toggle
-nnoremap <Leader>bb :ToggleBufExplorer<CR>
+    " fast install Plugins
+    nnoremap <Leader>p :PluginInstall<CR>
 
-" -- Plugin Settings --
+    " modify and set the hybrid colorscheme
+    set t_Co=256
+    set background=dark
+    colorscheme hybrid
 
-" Additional python syntax highlighting
-let python_highlight_all=1
+    " set keybind for bufexplorer toggle
+    nnoremap <Leader>bb :ToggleBufExplorer<CR>
 
-" set bufexplorer keybinds
-let g:bufExplorerSplitHorzSize=1
+    " -- Plugin Settings --
 
-" set octol settings for C++
-let g:cpp_class_scope_highlight=1
-let g:cpp_experimental_template_highlight=1
+    " Additional python syntax highlighting
+    let python_highlight_all=1
+
+    " set bufexplorer keybinds
+    let g:bufExplorerSplitHorzSize=1
+
+    " set octol settings for C++
+    let g:cpp_class_scope_highlight=1
+    let g:cpp_experimental_template_highlight=1
+endif

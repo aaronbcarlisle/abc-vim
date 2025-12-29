@@ -85,14 +85,14 @@ let g:colors_name = "hybrid"
 let s:palette = {'gui' : {} , 'cterm' : {}}
 
 if exists("g:hybrid_reduced_contrast") && g:hybrid_reduced_contrast == 1
-  let s:gui_background = "#232c31"
-  let s:gui_selection  = "#425059"
-  let s:gui_line       = "#2d3c46"
+  let s:gui_background = "#111618"
+  let s:gui_selection  = "#21282c"
+  let s:gui_line       = "#161e23"
   let s:gui_comment    = "#6c7a80"
 else
-  let s:gui_background = "#1d1f21"
-  let s:gui_selection  = "#373b41"
-  let s:gui_line       = "#282a2e"
+  let s:gui_background = "#0e0f10"
+  let s:gui_selection  = "#1b1d20"
+  let s:gui_line       = "#141517"
   let s:gui_comment    = "#707880"
 endif
 
@@ -108,8 +108,8 @@ let s:palette.gui.green      = { 'dark' : "#b5bd68"        , 'light' : "#005f00"
 let s:palette.gui.aqua       = { 'dark' : "#8abeb7"        , 'light' : "#005f5f" }
 let s:palette.gui.blue       = { 'dark' : "#81a2be"        , 'light' : "#00005f" }
 let s:palette.gui.purple     = { 'dark' : "#b294bb"        , 'light' : "#5f005f" }
-let s:palette.gui.window     = { 'dark' : "#303030"        , 'light' : "#9e9e9e" }
-let s:palette.gui.darkcolumn = { 'dark' : "#1c1c1c"        , 'light' : "#808080" }
+let s:palette.gui.window     = { 'dark' : "#181818"        , 'light' : "#9e9e9e" }
+let s:palette.gui.darkcolumn = { 'dark' : "#0e0e0e"        , 'light' : "#808080" }
 let s:palette.gui.addbg      = { 'dark' : "#5F875F"        , 'light' : "#d7ffd7" }
 let s:palette.gui.addfg      = { 'dark' : "#d7ffaf"        , 'light' : "#005f00" }
 let s:palette.gui.changebg   = { 'dark' : "#5F5F87"        , 'light' : "#d7d7ff" }
@@ -148,9 +148,9 @@ else
   let s:cterm_delbg      = "167"
 endif
 
-let s:palette.cterm.background = { 'dark' : "234"              , 'light' : "254" }
+let s:palette.cterm.background = { 'dark' : "232"              , 'light' : "254" }
 let s:palette.cterm.foreground = { 'dark' : s:cterm_foreground , 'light' : "16"  }
-let s:palette.cterm.window     = { 'dark' : "236"              , 'light' : "247" }
+let s:palette.cterm.window     = { 'dark' : "233"              , 'light' : "247" }
 let s:palette.cterm.selection  = { 'dark' : s:cterm_selection  , 'light' : "250" }
 let s:palette.cterm.line       = { 'dark' : s:cterm_line       , 'light' : "252" }
 let s:palette.cterm.comment    = { 'dark' : s:cterm_comment    , 'light' : "59"  }
@@ -161,7 +161,7 @@ let s:palette.cterm.green      = { 'dark' : s:cterm_green      , 'light' : "22" 
 let s:palette.cterm.aqua       = { 'dark' : s:cterm_aqua       , 'light' : "23"  }
 let s:palette.cterm.blue       = { 'dark' : s:cterm_blue       , 'light' : "17"  }
 let s:palette.cterm.purple     = { 'dark' : s:cterm_purple     , 'light' : "53"  }
-let s:palette.cterm.darkcolumn = { 'dark' : "234"              , 'light' : "244" }
+let s:palette.cterm.darkcolumn = { 'dark' : "232"              , 'light' : "244" }
 let s:palette.cterm.addbg      = { 'dark' : "65"               , 'light' : "194" }
 let s:palette.cterm.addfg      = { 'dark' : "193"              , 'light' : "22"  }
 let s:palette.cterm.changebg   = { 'dark' : "60"               , 'light' : "189" }
@@ -415,6 +415,73 @@ hi! link diffAdded Special
 "   diffComment
 
 "}}}
+" Markdown Syntax Highlighting:"{{{
+" ----------------------------------------------------------------------------
+" Headers
+exe "hi! markdownH1"              .s:fg_red         .s:bg_none        .s:fmt_bold
+exe "hi! markdownH2"              .s:fg_orange      .s:bg_none        .s:fmt_bold
+exe "hi! markdownH3"              .s:fg_yellow      .s:bg_none        .s:fmt_bold
+exe "hi! markdownH4"              .s:fg_green       .s:bg_none        .s:fmt_bold
+exe "hi! markdownH5"              .s:fg_blue        .s:bg_none        .s:fmt_bold
+exe "hi! markdownH6"              .s:fg_purple      .s:bg_none        .s:fmt_bold
+exe "hi! markdownHeadingDelimiter" .s:fg_comment    .s:bg_none        .s:fmt_none
+
+" Text formatting
+exe "hi! markdownBold"            .s:fg_orange      .s:bg_none        .s:fmt_bold
+exe "hi! markdownItalic"          .s:fg_purple      .s:bg_none        .s:fmt_ital
+exe "hi! markdownBoldItalic"      .s:fg_orange      .s:bg_none        .s:fmt_bldi
+exe "hi! markdownStrike"          .s:fg_comment     .s:bg_none        .s:fmt_none
+
+" Code (inline and blocks)
+exe "hi! markdownCode"            .s:fg_green       .s:bg_darkcolumn  .s:fmt_none
+exe "hi! markdownCodeBlock"       .s:fg_foreground  .s:bg_darkcolumn  .s:fmt_none
+exe "hi! markdownCodeDelimiter"   .s:fg_aqua        .s:bg_darkcolumn  .s:fmt_bold
+
+" Fenced code block markers (```bash, etc)
+exe "hi! markdownFencedCodeBlock" .s:fg_foreground  .s:bg_darkcolumn  .s:fmt_none
+exe "hi! mkdSnippetSH"            .s:fg_foreground  .s:bg_darkcolumn  .s:fmt_none
+exe "hi! mkdSnippetPYTHON"        .s:fg_foreground  .s:bg_darkcolumn  .s:fmt_none
+
+" Links
+exe "hi! markdownLinkText"        .s:fg_blue        .s:bg_none        .s:fmt_undr
+exe "hi! markdownUrl"             .s:fg_aqua        .s:bg_none        .s:fmt_undr
+exe "hi! markdownUrlTitle"        .s:fg_green       .s:bg_none        .s:fmt_none
+exe "hi! markdownUrlDelimiter"    .s:fg_comment     .s:bg_none        .s:fmt_none
+exe "hi! markdownUrlTitleDelimiter" .s:fg_comment   .s:bg_none        .s:fmt_none
+
+" Lists
+exe "hi! markdownListMarker"      .s:fg_red         .s:bg_none        .s:fmt_bold
+exe "hi! markdownOrderedListMarker" .s:fg_red       .s:bg_none        .s:fmt_bold
+
+" Blockquotes
+exe "hi! markdownBlockquote"      .s:fg_comment     .s:bg_none        .s:fmt_ital
+
+" Rules
+exe "hi! markdownRule"            .s:fg_comment     .s:bg_none        .s:fmt_none
+
+" Misc
+exe "hi! markdownId"              .s:fg_purple      .s:bg_none        .s:fmt_none
+exe "hi! markdownIdDeclaration"   .s:fg_purple      .s:bg_none        .s:fmt_none
+
+" vim-markdown specific
+exe "hi! mkdHeading"              .s:fg_comment     .s:bg_none        .s:fmt_none
+exe "hi! mkdLink"                 .s:fg_blue        .s:bg_none        .s:fmt_undr
+exe "hi! mkdURL"                  .s:fg_aqua        .s:bg_none        .s:fmt_none
+exe "hi! mkdCode"                 .s:fg_green       .s:bg_darkcolumn  .s:fmt_none
+exe "hi! mkdCodeDelimiter"        .s:fg_aqua        .s:bg_darkcolumn  .s:fmt_bold
+exe "hi! mkdCodeStart"            .s:fg_aqua        .s:bg_darkcolumn  .s:fmt_bold
+exe "hi! mkdCodeEnd"              .s:fg_aqua        .s:bg_darkcolumn  .s:fmt_bold
+exe "hi! mkdDelimiter"            .s:fg_comment     .s:bg_none        .s:fmt_none
+exe "hi! mkdListItem"             .s:fg_red         .s:bg_none        .s:fmt_bold
+exe "hi! mkdBlockquote"           .s:fg_comment     .s:bg_none        .s:fmt_ital
+
+" Shell syntax in fenced blocks (comments, keywords, etc)
+exe "hi! shComment"               .s:fg_comment     .s:bg_none        .s:fmt_ital
+exe "hi! shShellVariables"        .s:fg_purple      .s:bg_none        .s:fmt_none
+exe "hi! shVariable"              .s:fg_purple      .s:bg_none        .s:fmt_none
+exe "hi! shCommandSub"            .s:fg_foreground  .s:bg_none        .s:fmt_none
+
+"}}}
 "
 " This is needed for some reason: {{{
 
@@ -427,11 +494,11 @@ let &background = s:style
 " Copyright (c) 2009-2012 NanoTech
 " Copyright (c) 2012 w0ng
 "
-" Permission is hereby granted, free of charge, to any per‐
-" son obtaining a copy of this software and associated doc‐
-" umentation files (the “Software”), to deal in the Soft‐
+" Permission is hereby granted, free of charge, to any per-
+" son obtaining a copy of this software and associated doc-
+" umentation files (the "Software"), to deal in the Soft-
 " ware without restriction, including without limitation
-" the rights to use, copy, modify, merge, publish, distrib‐
+" the rights to use, copy, modify, merge, publish, distrib-
 " ute, sublicense, and/or sell copies of the Software, and
 " to permit persons to whom the Software is furnished to do
 " so, subject to the following conditions:
@@ -440,13 +507,13 @@ let &background = s:style
 " shall be included in all copies or substantial portions
 " of the Software.
 "
-" THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY
+" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
 " KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-" THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICU‐
+" THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICU-
 " LAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 " AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-" DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CON‐
-" TRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CON‐
+" DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CON-
+" TRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CON-
 " NECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 " THE SOFTWARE.
 

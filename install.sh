@@ -73,7 +73,7 @@ ensure_dep vim
 # If this script is being run from inside an abc-vim git checkout, install from
 # that working tree (picking up local/uncommitted edits) instead of cloning the
 # remote. When piped/downloaded standalone, fall back to the remote clone.
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd -P) || SCRIPT_DIR=""
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" 2>/dev/null && pwd -P) || SCRIPT_DIR=""
 LOCAL_SRC=""
 if [ -n "$SCRIPT_DIR" ]; then
     src_top=$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null) || src_top=""
@@ -149,7 +149,7 @@ fi
 
 # --- install the plugins ---------------------------------------------------
 info "Installing plugins via Vundle..."
-if vim +PluginInstall +qall; then
+if vim +PluginInstall +qall > /dev/null; then
     info "All done! Start vim to enjoy your ABC Vim setup."
 else
     err "Vim exited non-zero during plugin installation. Re-run 'vim +PluginInstall' to retry."

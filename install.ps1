@@ -172,7 +172,7 @@ if (Test-Path (Join-Path $VundleDir '.git')) {
 
 # --- install the plugins ---------------------------------------------------
 Write-Info 'Installing plugins via Vundle...'
-vim +PluginInstall +qall
+vim +PluginInstall +qall | Out-Null
 # $ErrorActionPreference='Stop' does not trip on native exit codes, so check it.
 if ($LASTEXITCODE -ne 0) {
     throw "Vim exited with code $LASTEXITCODE during plugin installation. Re-run 'vim +PluginInstall' to retry."

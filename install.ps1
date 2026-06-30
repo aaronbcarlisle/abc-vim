@@ -62,17 +62,31 @@ function Ensure-Dep($cmd, $wingetId, $chocoId, $scoopId) {
 Ensure-Dep 'git' 'Git.Git'   'git' 'git'
 Ensure-Dep 'vim' 'vim.vim'   'vim' 'vim'
 
+# git is a native exe, so its non-zero exit codes do NOT honor
+# $ErrorActionPreference and a plain try/catch never fires. Check $LASTEXITCODE
+# explicitly: hard-fail on the operations we depend on (clone), warn on the
+# best-effort ones (pull --ff-only).
+function Invoke-Git {
+    param([Parameter(Mandatory)][string[]]$GitArgs, [string]$WarnOnFail)
+    & git @GitArgs
+    if ($LASTEXITCODE -ne 0) {
+        if ($WarnOnFail) { Write-Warn $WarnOnFail; return $false }
+        throw "git $($GitArgs -join ' ') failed with exit code $LASTEXITCODE."
+    }
+    return $true
+}
+
 # --- clone or update the vim files -----------------------------------------
 if (Test-Path (Join-Path $VimDir '.git')) {
     Write-Info "$VimDir already exists - updating it instead of re-cloning."
-    try { git -C $VimDir pull --ff-only } catch { Write-Warn "Could not fast-forward $VimDir; leaving it as-is." }
+    Invoke-Git @('-C', $VimDir, 'pull', '--ff-only') -WarnOnFail "Could not fast-forward $VimDir; leaving it as-is." | Out-Null
 } elseif (Test-Path $VimDir) {
     $backup = "$VimDir.bak.$(Stamp)"
     Write-Warn "$VimDir exists but is not an abc-vim git checkout - moving it to $backup"
     Move-Item -LiteralPath $VimDir -Destination $backup
-    git clone $RepoUrl $VimDir
+    Invoke-Git @('clone', $RepoUrl, $VimDir) | Out-Null
 } else {
-    git clone $RepoUrl $VimDir
+    Invoke-Git @('clone', $RepoUrl, $VimDir) | Out-Null
 }
 
 # Make sure the runtime scratch directories used by the .vimrc exist.
@@ -109,14 +123,14 @@ try {
 # --- install or update Vundle ----------------------------------------------
 if (Test-Path (Join-Path $VundleDir '.git')) {
     Write-Info 'Vundle already installed - updating it.'
-    try { git -C $VundleDir pull --ff-only } catch { Write-Warn 'Could not fast-forward Vundle; leaving it as-is.' }
+    Invoke-Git @('-C', $VundleDir, 'pull', '--ff-only') -WarnOnFail 'Could not fast-forward Vundle; leaving it as-is.' | Out-Null
 } elseif (Test-Path $VundleDir) {
     $backup = "$VundleDir.bak.$(Stamp)"
     Write-Warn "$VundleDir exists but is not a git checkout - moving it to $backup"
     Move-Item -LiteralPath $VundleDir -Destination $backup
-    git clone $VundleUrl $VundleDir
+    Invoke-Git @('clone', $VundleUrl, $VundleDir) | Out-Null
 } else {
-    git clone $VundleUrl $VundleDir
+    Invoke-Git @('clone', $VundleUrl, $VundleDir) | Out-Null
 }
 
 # --- install the plugins ---------------------------------------------------

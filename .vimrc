@@ -254,11 +254,13 @@ if has("autocmd")
        autocmd FileType python,vim,vimrc setlocal ts=4 sts=4 sw=4 expandtab
    augroup END
 
-   " set default textwidth
+   " set default textwidth (80 everywhere, 79 for Python). Use the real
+   " 'textwidth' option via setlocal -- b:textwidth was just an unused variable,
+   " and a global default avoids BufEnter clobbering the Python-specific value.
+   set textwidth=80
    augroup set_text_width
        autocmd!
-       autocmd BufEnter * let b:textwidth=80
-       autocmd Filetype python let b:textwidth=79
+       autocmd FileType python setlocal textwidth=79
    augroup END
 endif
 

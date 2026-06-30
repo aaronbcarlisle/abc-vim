@@ -77,7 +77,10 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd -P) || SCRIPT
 LOCAL_SRC=""
 if [ -n "$SCRIPT_DIR" ]; then
     src_top=$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null) || src_top=""
-    if [ -n "$src_top" ] && [ -f "$src_top/.vimrc" ]; then
+    # Require markers specific to abc-vim, not just any repo with a root .vimrc,
+    # so we never recursively copy an unrelated dotfiles/home tree into ~/.vim.
+    if [ -n "$src_top" ] && [ -f "$src_top/.vimrc" ] && \
+       [ -f "$src_top/colors/hybrid.vim" ] && [ -f "$src_top/install.ps1" ]; then
         LOCAL_SRC="$src_top"
     fi
 fi

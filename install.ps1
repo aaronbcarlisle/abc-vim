@@ -33,30 +33,35 @@ function Stamp { Get-Date -Format 'yyyyMMddHHmmss' }
 function Have($cmd) { [bool](Get-Command $cmd -ErrorAction SilentlyContinue) }
 
 # --- dependency installation -----------------------------------------------
-function Install-Pkg($wingetId, $chocoId, $scoopId) {
-    if (Have 'winget') {
-        winget install --id $wingetId -e --source winget `
-            --accept-source-agreements --accept-package-agreements
-    } elseif (Have 'choco') {
-        choco install $chocoId -y
-    } elseif (Have 'scoop') {
-        scoop install $scoopId
-    } else {
-        throw "No supported package manager (winget/choco/scoop) found. Install '$chocoId' manually and re-run."
-    }
-    # Refresh PATH for this session so the freshly installed tool is found.
+function Update-SessionPath {
+    # Refresh PATH for this session so a freshly installed tool is found.
     $env:Path = [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
                 [System.Environment]::GetEnvironmentVariable('Path', 'User')
 }
 
+# Try every package manager present on PATH in turn, not just the first one:
+# if winget is installed but its install fails, fall back to choco then scoop.
 function Ensure-Dep($cmd, $wingetId, $chocoId, $scoopId) {
     if (Have $cmd) { return }
     Write-Warn "'$cmd' is not installed - attempting to install it..."
-    Install-Pkg $wingetId $chocoId $scoopId
-    if (-not (Have $cmd)) {
-        throw "Could not find '$cmd' after install. Open a new terminal so PATH refreshes, then re-run."
+    $managers = @(
+        @{ Name = 'winget'; Action = { winget install --id $wingetId -e --source winget --accept-source-agreements --accept-package-agreements } },
+        @{ Name = 'choco';  Action = { choco install $chocoId -y } },
+        @{ Name = 'scoop';  Action = { scoop install $scoopId } }
+    )
+    $tried = $false
+    foreach ($m in $managers) {
+        if (-not (Have $m.Name)) { continue }
+        $tried = $true
+        Write-Info "Trying $($m.Name)..."
+        try { & $m.Action } catch { Write-Warn "$($m.Name) failed: $_" }
+        Update-SessionPath
+        if (Have $cmd) { Write-Info "Installed '$cmd' via $($m.Name)."; return }
     }
-    Write-Info "Installed '$cmd'."
+    if (-not $tried) {
+        throw "No supported package manager (winget/choco/scoop) found. Install '$cmd' manually and re-run."
+    }
+    throw "Could not install '$cmd' with any available package manager. Install it manually (or open a new terminal so PATH refreshes) and re-run."
 }
 
 Ensure-Dep 'git' 'Git.Git'   'git' 'git'
@@ -86,7 +91,12 @@ $ScriptDir = if ($PSCommandPath) { Split-Path -Parent $PSCommandPath } else { $n
 $LocalSrc  = $null
 if ($ScriptDir) {
     $top = (& git -C $ScriptDir rev-parse --show-toplevel 2>$null)
-    if ($LASTEXITCODE -eq 0 -and $top -and (Test-Path (Join-Path $top '.vimrc'))) {
+    # Require markers specific to abc-vim, not just any repo with a root .vimrc,
+    # so we never recursively copy an unrelated dotfiles/home tree into vimfiles.
+    if ($LASTEXITCODE -eq 0 -and $top -and
+        (Test-Path (Join-Path $top '.vimrc')) -and
+        (Test-Path (Join-Path $top 'colors/hybrid.vim')) -and
+        (Test-Path (Join-Path $top 'install.sh'))) {
         $LocalSrc = $top
     }
 }

@@ -336,7 +336,7 @@ if !has ("pycharm")
     " modify and set the hybrid colorscheme
     set t_Co=256
     set background=dark
-    colorscheme hybrid
+    silent! colorscheme hybrid
 
     " set keybind for bufexplorer toggle
     nnoremap <Leader>bb :ToggleBufExplorer<CR>

@@ -14,18 +14,22 @@ place, anything else (or an existing `~/.vimrc`) is backed up with a timestamp
 rather than overwritten.
 
 ### Linux / macOS
-One-line bootstrap (no clone needed):
+Download the installer, review it if you like, then run it:
 
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.sh)"
+    curl -fsSL https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.sh -o abc-vim-install.sh
+    less abc-vim-install.sh   # optional: inspect before running
+    sh abc-vim-install.sh
 
 Or from a local clone:
 
     git clone https://github.com/aaronbcarlisle/abc-vim.git ~/.vim && sh ~/.vim/install.sh
 
 ### Windows (PowerShell)
-One-line bootstrap (no clone needed):
+Download the installer, review it if you like, then run it:
 
-    iwr -useb https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.ps1 | iex
+    iwr -useb https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.ps1 -OutFile abc-vim-install.ps1
+    notepad abc-vim-install.ps1   # optional: inspect before running
+    powershell -ExecutionPolicy Bypass -File abc-vim-install.ps1
 
 Or from a local clone:
 

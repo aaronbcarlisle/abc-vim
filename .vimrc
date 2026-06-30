@@ -6,9 +6,6 @@ filetype off
 
 " system prep for unix/windows platforms
 if has ("win32")
-    set rtp+=$USERPROFILE/vimfiles/bundle/Vundle.vim
-    call vundle#rc('$USERPROFILE/vimfiles/bundle/')
-
     " re-map swap, backup and undo directories
     set directory=$USERPROFILE/vimfiles/swap//
     set backupdir=$USERPROFILE/vimfiles/backup//
@@ -26,9 +23,6 @@ if has ("win32")
     endif
 
 elseif has ("unix")
-    set rtp+=~/.vim/bundle/Vundle.vim
-    call vundle#rc()
-
     " re-map swap, backup and undo directories
     set directory=~/.vim/swap//
     set backupdir=~/.vim/backup//
@@ -43,7 +37,16 @@ endif
 if !has ("pycharm")
     " -- Vundle Setup --
 
-    call vundle#begin()
+    " add Vundle to the runtimepath and point it at the platform's bundle dir.
+    " expand() is required so $USERPROFILE resolves (Vimscript strings are
+    " not environment-expanded on their own).
+    if has ("win32")
+        set rtp+=$USERPROFILE/vimfiles/bundle/Vundle.vim
+        call vundle#begin(expand('$USERPROFILE/vimfiles/bundle/'))
+    else
+        set rtp+=~/.vim/bundle/Vundle.vim
+        call vundle#begin()
+    endif
 
     " some useful plugins
     Plugin 'jlanzarotta/bufexplorer'
@@ -208,11 +211,13 @@ set formatoptions=""
 " these are set up at the recommendation of Steve Losh's 'Learn Vimscript the Hardway'
 if has("autocmd")
 
-   " automatically delete trailing white spaces
+   " automatically delete trailing white spaces on save (BufWritePre only, so
+   " merely opening or switching buffers never edits them or jumps the cursor)
    augroup clear_whitespace
        autocmd!
-       autocmd BufEnter,BufRead,BufWrite * silent! %s/[\r \t]\+$//
-       autocmd BufEnter *.php :%s/[ \t\r]\+$//e
+       autocmd BufWritePre * let b:ws_view = winsaveview() |
+           \ silent! keeppatterns %s/[\r \t]\+$// |
+           \ call winrestview(b:ws_view)
    augroup END
 
    " set current directory to that of the opened files

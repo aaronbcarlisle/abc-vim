@@ -2,8 +2,11 @@
 # ============================================================================
 # ABC Vim - Unix/Linux/macOS installer
 #
-# Usage (from a clone):      sh install.sh
-# Usage (remote bootstrap):  sh -c "$(curl -fsSL https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.sh)"
+# Usage (from a clone):  sh install.sh
+# Usage (download first, inspect, then run -- preferred over piping to a shell):
+#   curl -fsSL https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.sh -o abc-vim-install.sh
+#   less abc-vim-install.sh   # optional: review before running
+#   sh abc-vim-install.sh
 #
 # This script is idempotent and safe to re-run. It will:
 #   1. Install missing dependencies (git, vim) using your package manager.
@@ -118,6 +121,9 @@ fi
 
 # --- install the plugins ---------------------------------------------------
 info "Installing plugins via Vundle..."
-vim +PluginInstall +qall
-
-info "All done! Start vim to enjoy your ABC Vim setup."
+if vim +PluginInstall +qall; then
+    info "All done! Start vim to enjoy your ABC Vim setup."
+else
+    err "Vim exited non-zero during plugin installation. Re-run 'vim +PluginInstall' to retry."
+    exit 1
+fi

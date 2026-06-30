@@ -1,8 +1,11 @@
 # ============================================================================
 # ABC Vim - Windows installer (PowerShell)
 #
-# Usage (from a clone):      powershell -ExecutionPolicy Bypass -File install.ps1
-# Usage (remote bootstrap):  iwr -useb https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.ps1 | iex
+# Usage (from a clone):  powershell -ExecutionPolicy Bypass -File install.ps1
+# Usage (download first, inspect, then run -- preferred over piping to iex):
+#   iwr -useb https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.ps1 -OutFile abc-vim-install.ps1
+#   notepad abc-vim-install.ps1   # optional: review before running
+#   powershell -ExecutionPolicy Bypass -File abc-vim-install.ps1
 #
 # This script is idempotent and safe to re-run. It will:
 #   1. Install missing dependencies (git, vim) via winget/choco/scoop.
@@ -119,5 +122,9 @@ if (Test-Path (Join-Path $VundleDir '.git')) {
 # --- install the plugins ---------------------------------------------------
 Write-Info 'Installing plugins via Vundle...'
 vim +PluginInstall +qall
+# $ErrorActionPreference='Stop' does not trip on native exit codes, so check it.
+if ($LASTEXITCODE -ne 0) {
+    throw "Vim exited with code $LASTEXITCODE during plugin installation. Re-run 'vim +PluginInstall' to retry."
+}
 
 Write-Info 'All done! Start vim to enjoy your ABC Vim setup.'

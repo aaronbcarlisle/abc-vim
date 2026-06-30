@@ -22,6 +22,7 @@ REPO_URL="${ABC_VIM_REPO:-https://github.com/aaronbcarlisle/abc-vim.git}"
 VUNDLE_URL="https://github.com/VundleVim/Vundle.vim.git"
 VIM_DIR="$HOME/.vim"
 VIMRC="$HOME/.vimrc"
+IDEAVIMRC="$HOME/.ideavimrc"
 VUNDLE_DIR="$VIM_DIR/bundle/Vundle.vim"
 
 # --- pretty logging --------------------------------------------------------
@@ -73,7 +74,7 @@ ensure_dep vim
 # If this script is being run from inside an abc-vim git checkout, install from
 # that working tree (picking up local/uncommitted edits) instead of cloning the
 # remote. When piped/downloaded standalone, fall back to the remote clone.
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd -P) || SCRIPT_DIR=""
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" 2>/dev/null && pwd -P) || SCRIPT_DIR=""
 LOCAL_SRC=""
 if [ -n "$SCRIPT_DIR" ]; then
     src_top=$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null) || src_top=""
@@ -134,6 +135,22 @@ else
 fi
 info "Linked $VIMRC -> $TARGET_VIMRC"
 
+# --- link ~/.ideavimrc (IdeaVim support) -----------------------------------
+TARGET_IDEAVIMRC="$VIM_DIR/.ideavimrc"
+if [ -f "$TARGET_IDEAVIMRC" ]; then
+    if [ -L "$IDEAVIMRC" ]; then
+        ln -sf "$TARGET_IDEAVIMRC" "$IDEAVIMRC"
+    elif [ -e "$IDEAVIMRC" ]; then
+        backup="$IDEAVIMRC.bak.$(stamp)"
+        warn "Existing $IDEAVIMRC found - backing it up to $backup"
+        mv "$IDEAVIMRC" "$backup"
+        ln -s "$TARGET_IDEAVIMRC" "$IDEAVIMRC"
+    else
+        ln -s "$TARGET_IDEAVIMRC" "$IDEAVIMRC"
+    fi
+    info "Linked $IDEAVIMRC -> $TARGET_IDEAVIMRC"
+fi
+
 # --- install or update Vundle ----------------------------------------------
 if [ -d "$VUNDLE_DIR/.git" ]; then
     info "Vundle already installed - updating it."
@@ -149,7 +166,7 @@ fi
 
 # --- install the plugins ---------------------------------------------------
 info "Installing plugins via Vundle..."
-if vim +PluginInstall +qall; then
+if vim +PluginInstall +qall > /dev/null 2>&1; then
     info "All done! Start vim to enjoy your ABC Vim setup."
 else
     err "Vim exited non-zero during plugin installation. Re-run 'vim +PluginInstall' to retry."

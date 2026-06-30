@@ -1,0 +1,12 @@
+# Ignore Vim runtime scratch files while keeping the placeholder files that
+# ensure the directories are tracked by git (so the .vimrc path settings work
+# immediately after a fresh clone without requiring manual mkdir).
+backup/*
+swap/*
+undo/*
+!backup/tmp.txt
+!swap/tmp.txt
+!undo/tmp.txt
+
+# Vundle and other plugins are installed at runtime, not committed.
+bundle/

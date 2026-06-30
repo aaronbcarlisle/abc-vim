@@ -22,6 +22,7 @@ $RepoUrl   = if ($env:ABC_VIM_REPO) { $env:ABC_VIM_REPO } else { 'https://github
 $VundleUrl = 'https://github.com/VundleVim/Vundle.vim.git'
 $VimDir    = Join-Path $env:USERPROFILE 'vimfiles'
 $Vimrc     = Join-Path $env:USERPROFILE '.vimrc'
+$IdeaVimrc = Join-Path $env:USERPROFILE '.ideavimrc'
 $VundleDir = Join-Path $VimDir 'bundle\Vundle.vim'
 
 # --- pretty logging --------------------------------------------------------
@@ -157,6 +158,28 @@ try {
     Write-Warn "Symlinks unavailable - copied .vimrc instead (edits in $Vimrc will not track the repo)."
 }
 
+# --- link .ideavimrc (IdeaVim support) -------------------------------------
+$TargetIdeaVimrc = Join-Path $VimDir '.ideavimrc'
+if (Test-Path $TargetIdeaVimrc) {
+    if (Test-Path $IdeaVimrc) {
+        $existing = Get-Item -LiteralPath $IdeaVimrc -Force
+        if (-not $existing.LinkType) {
+            $backup = "$IdeaVimrc.bak.$(Stamp)"
+            Write-Warn "Existing $IdeaVimrc found - backing it up to $backup"
+            Move-Item -LiteralPath $IdeaVimrc -Destination $backup
+        } else {
+            Remove-Item -LiteralPath $IdeaVimrc -Force
+        }
+    }
+    try {
+        New-Item -ItemType SymbolicLink -Path $IdeaVimrc -Target $TargetIdeaVimrc -ErrorAction Stop | Out-Null
+        Write-Info "Linked $IdeaVimrc -> $TargetIdeaVimrc"
+    } catch {
+        Copy-Item -LiteralPath $TargetIdeaVimrc -Destination $IdeaVimrc -Force
+        Write-Warn "Symlinks unavailable - copied .ideavimrc instead (edits in $IdeaVimrc will not track the repo)."
+    }
+}
+
 # --- install or update Vundle ----------------------------------------------
 if (Test-Path (Join-Path $VundleDir '.git')) {
     Write-Info 'Vundle already installed - updating it.'
@@ -172,7 +195,7 @@ if (Test-Path (Join-Path $VundleDir '.git')) {
 
 # --- install the plugins ---------------------------------------------------
 Write-Info 'Installing plugins via Vundle...'
-vim +PluginInstall +qall
+vim +PluginInstall +qall 2>$null | Out-Null
 # $ErrorActionPreference='Stop' does not trip on native exit codes, so check it.
 if ($LASTEXITCODE -ne 0) {
     throw "Vim exited with code $LASTEXITCODE during plugin installation. Re-run 'vim +PluginInstall' to retry."

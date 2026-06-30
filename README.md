@@ -6,13 +6,35 @@ My personal Vim setup for Linux and Windows. Built and inspired from https://git
 ---
 
 # Install
-Vundle is included in the following install commands. If Vundle is already installed it'll move to installing the plugins in the `.vimrc` file after the initial clone and setup.
+The installers are idempotent and safe to re-run. They install any missing
+dependencies (`git`, `vim`), clone the vim files, set up `~/.vimrc`, install
+Vundle, and then install the plugins listed in the `.vimrc`. Existing
+directories are handled gracefully — an existing abc-vim checkout is updated in
+place, anything else (or an existing `~/.vimrc`) is backed up with a timestamp
+rather than overwritten.
 
-### Windows
-    cd %USERPROFILE% && git clone https://github.com/abcarlisle/abc-vim.git vimfiles && move vimfiles\.vimrc .vimrc && git clone https://github.com/VundleVim/Vundle.vim.git %USERPROFILE%/vimfiles/bundle/Vundle.vim & vim +PluginInstall +qall 
+### Linux / macOS
+One-line bootstrap (no clone needed):
 
-### Linux
-    cd ~ && git clone https://github.com/abcarlisle/abc-vim.git .vim && mv .vim/.vimrc ~ && git clone https://github.com/VundleVim/Vundle.vim.git .vim/bundle/Vundle.vim; vim +PluginInstall +qall
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.sh)"
+
+Or from a local clone:
+
+    git clone https://github.com/aaronbcarlisle/abc-vim.git ~/.vim && sh ~/.vim/install.sh
+
+### Windows (PowerShell)
+One-line bootstrap (no clone needed):
+
+    iwr -useb https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.ps1 | iex
+
+Or from a local clone:
+
+    git clone https://github.com/aaronbcarlisle/abc-vim.git $env:USERPROFILE\vimfiles; powershell -ExecutionPolicy Bypass -File $env:USERPROFILE\vimfiles\install.ps1
+
+> Dependency auto-install uses your system package manager
+> (`apt`/`dnf`/`yum`/`pacman`/`zypper`/`apk`/`brew`/`port` on Unix,
+> `winget`/`choco`/`scoop` on Windows). If none is available the installer tells
+> you which dependency to install by hand.
 
 ---
 

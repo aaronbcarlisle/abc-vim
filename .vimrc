@@ -226,11 +226,8 @@ if has("autocmd")
            \ call winrestview(b:ws_view)
    augroup END
 
-   " set current directory to that of the opened files
-   augroup set_syntax
-       autocmd!
-       autocmd BufEnter * silent! :syntax on
-   augroup END
+   " (syntax is already enabled globally via 'syntax on' near the top; a
+   " BufEnter autocmd that re-ran it would undo the ,sy / :syntax off toggle.)
 
    " set current directory to that of the opened files
    augroup set_working_path

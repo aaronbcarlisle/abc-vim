@@ -6,13 +6,43 @@ My personal Vim setup for Linux and Windows. Built and inspired from https://git
 ---
 
 # Install
-Vundle is included in the following install commands. If Vundle is already installed it'll move to installing the plugins in the `.vimrc` file after the initial clone and setup.
+The installers are idempotent and safe to re-run. They install any missing
+dependencies (`git`, `vim`), clone the vim files, set up `~/.vimrc`, install
+Vundle, and then install the plugins listed in the `.vimrc`. Existing
+directories are handled gracefully — an existing abc-vim checkout is updated in
+place, anything else (or an existing `~/.vimrc`) is backed up with a timestamp
+rather than overwritten.
 
-### Windows
-    cd %USERPROFILE% && git clone https://github.com/abcarlisle/abc-vim.git vimfiles && move vimfiles\.vimrc .vimrc && git clone https://github.com/VundleVim/Vundle.vim.git %USERPROFILE%/vimfiles/bundle/Vundle.vim & vim +PluginInstall +qall 
+If you run the installer from inside a local abc-vim checkout, it installs from
+that working tree (including any uncommitted edits) instead of cloning the
+remote; downloaded standalone, it clones the remote as usual.
 
-### Linux
-    cd ~ && git clone https://github.com/abcarlisle/abc-vim.git .vim && mv .vim/.vimrc ~ && git clone https://github.com/VundleVim/Vundle.vim.git .vim/bundle/Vundle.vim; vim +PluginInstall +qall
+### Linux / macOS
+Download the installer, review it if you like, then run it:
+
+    curl -fsSL https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.sh -o abc-vim-install.sh
+    less abc-vim-install.sh   # optional: inspect before running
+    sh abc-vim-install.sh
+
+Or from a local clone:
+
+    git clone https://github.com/aaronbcarlisle/abc-vim.git ~/.vim && sh ~/.vim/install.sh
+
+### Windows (PowerShell)
+Download the installer, review it if you like, then run it:
+
+    iwr -useb https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.ps1 -OutFile abc-vim-install.ps1
+    notepad abc-vim-install.ps1   # optional: inspect before running
+    powershell -ExecutionPolicy Bypass -File abc-vim-install.ps1
+
+Or from a local clone:
+
+    git clone https://github.com/aaronbcarlisle/abc-vim.git $env:USERPROFILE\vimfiles; powershell -ExecutionPolicy Bypass -File $env:USERPROFILE\vimfiles\install.ps1
+
+> Dependency auto-install uses your system package manager
+> (`apt`/`dnf`/`yum`/`pacman`/`zypper`/`apk`/`brew`/`port` on Unix,
+> `winget`/`choco`/`scoop` on Windows). If none is available the installer tells
+> you which dependency to install by hand.
 
 ---
 

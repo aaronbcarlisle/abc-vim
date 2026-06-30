@@ -166,7 +166,7 @@ fi
 
 # --- install the plugins ---------------------------------------------------
 info "Installing plugins via Vundle..."
-if vim +PluginInstall +qall > /dev/null; then
+if vim +PluginInstall +qall > /dev/null 2>&1; then
     info "All done! Start vim to enjoy your ABC Vim setup."
 else
     err "Vim exited non-zero during plugin installation. Re-run 'vim +PluginInstall' to retry."

@@ -76,8 +76,35 @@ function Invoke-Git {
     return $true
 }
 
-# --- clone or update the vim files -----------------------------------------
-if (Test-Path (Join-Path $VimDir '.git')) {
+# --- locate a local checkout -----------------------------------------------
+# If this script is being run from inside an abc-vim git checkout, install from
+# that working tree (picking up local/uncommitted edits) instead of cloning the
+# remote. When downloaded/run standalone, fall back to the remote clone.
+function Resolve-Full($p) { try { [System.IO.Path]::GetFullPath($p).TrimEnd('\', '/') } catch { $p } }
+
+$ScriptDir = if ($PSCommandPath) { Split-Path -Parent $PSCommandPath } else { $null }
+$LocalSrc  = $null
+if ($ScriptDir) {
+    $top = (& git -C $ScriptDir rev-parse --show-toplevel 2>$null)
+    if ($LASTEXITCODE -eq 0 -and $top -and (Test-Path (Join-Path $top '.vimrc'))) {
+        $LocalSrc = $top
+    }
+}
+
+# --- clone, copy, or update the vim files ----------------------------------
+if ($LocalSrc -and ((Resolve-Full $LocalSrc) -ieq (Resolve-Full $VimDir))) {
+    Write-Info "Running from the canonical checkout at $VimDir - using it in place."
+} elseif ($LocalSrc) {
+    Write-Info "Installing from local checkout $LocalSrc"
+    if (Test-Path $VimDir) {
+        $backup = "$VimDir.bak.$(Stamp)"
+        Write-Warn "$VimDir already exists - moving it to $backup"
+        Move-Item -LiteralPath $VimDir -Destination $backup
+    }
+    # copy the working tree verbatim (including .git) so uncommitted edits are
+    # preserved and future 'git pull' updates still work.
+    Copy-Item -LiteralPath $LocalSrc -Destination $VimDir -Recurse -Force
+} elseif (Test-Path (Join-Path $VimDir '.git')) {
     Write-Info "$VimDir already exists - updating it instead of re-cloning."
     Invoke-Git @('-C', $VimDir, 'pull', '--ff-only') -WarnOnFail "Could not fast-forward $VimDir; leaving it as-is." | Out-Null
 } elseif (Test-Path $VimDir) {

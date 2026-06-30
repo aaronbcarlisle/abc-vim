@@ -69,8 +69,33 @@ ensure_dep() {
 ensure_dep git
 ensure_dep vim
 
-# --- clone or update the vim files -----------------------------------------
-if [ -d "$VIM_DIR/.git" ]; then
+# --- locate a local checkout -----------------------------------------------
+# If this script is being run from inside an abc-vim git checkout, install from
+# that working tree (picking up local/uncommitted edits) instead of cloning the
+# remote. When piped/downloaded standalone, fall back to the remote clone.
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd -P) || SCRIPT_DIR=""
+LOCAL_SRC=""
+if [ -n "$SCRIPT_DIR" ]; then
+    src_top=$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null) || src_top=""
+    if [ -n "$src_top" ] && [ -f "$src_top/.vimrc" ]; then
+        LOCAL_SRC="$src_top"
+    fi
+fi
+
+# --- clone, copy, or update the vim files ----------------------------------
+if [ -n "$LOCAL_SRC" ] && [ "$LOCAL_SRC" = "$VIM_DIR" ]; then
+    info "Running from the canonical checkout at $VIM_DIR - using it in place."
+elif [ -n "$LOCAL_SRC" ]; then
+    info "Installing from local checkout $LOCAL_SRC"
+    if [ -e "$VIM_DIR" ]; then
+        backup="$VIM_DIR.bak.$(stamp)"
+        warn "$VIM_DIR already exists - moving it to $backup"
+        mv "$VIM_DIR" "$backup"
+    fi
+    # copy the working tree verbatim (including .git) so uncommitted edits are
+    # preserved and future 'git pull' updates still work.
+    cp -a "$LOCAL_SRC" "$VIM_DIR"
+elif [ -d "$VIM_DIR/.git" ]; then
     info "$VIM_DIR already exists - updating it instead of re-cloning."
     git -C "$VIM_DIR" pull --ff-only || warn "Could not fast-forward $VIM_DIR; leaving it as-is."
 elif [ -e "$VIM_DIR" ]; then

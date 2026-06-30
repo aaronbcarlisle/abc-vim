@@ -13,6 +13,10 @@ directories are handled gracefully — an existing abc-vim checkout is updated i
 place, anything else (or an existing `~/.vimrc`) is backed up with a timestamp
 rather than overwritten.
 
+If you run the installer from inside a local abc-vim checkout, it installs from
+that working tree (including any uncommitted edits) instead of cloning the
+remote; downloaded standalone, it clones the remote as usual.
+
 ### Linux / macOS
 Download the installer, review it if you like, then run it:
 

@@ -22,6 +22,7 @@ REPO_URL="${ABC_VIM_REPO:-https://github.com/aaronbcarlisle/abc-vim.git}"
 VUNDLE_URL="https://github.com/VundleVim/Vundle.vim.git"
 VIM_DIR="$HOME/.vim"
 VIMRC="$HOME/.vimrc"
+IDEAVIMRC="$HOME/.ideavimrc"
 VUNDLE_DIR="$VIM_DIR/bundle/Vundle.vim"
 
 # --- pretty logging --------------------------------------------------------
@@ -133,6 +134,22 @@ else
     ln -s "$TARGET_VIMRC" "$VIMRC"
 fi
 info "Linked $VIMRC -> $TARGET_VIMRC"
+
+# --- link ~/.ideavimrc (IdeaVim support) -----------------------------------
+TARGET_IDEAVIMRC="$VIM_DIR/.ideavimrc"
+if [ -f "$TARGET_IDEAVIMRC" ]; then
+    if [ -L "$IDEAVIMRC" ]; then
+        ln -sf "$TARGET_IDEAVIMRC" "$IDEAVIMRC"
+    elif [ -e "$IDEAVIMRC" ]; then
+        backup="$IDEAVIMRC.bak.$(stamp)"
+        warn "Existing $IDEAVIMRC found - backing it up to $backup"
+        mv "$IDEAVIMRC" "$backup"
+        ln -s "$TARGET_IDEAVIMRC" "$IDEAVIMRC"
+    else
+        ln -s "$TARGET_IDEAVIMRC" "$IDEAVIMRC"
+    fi
+    info "Linked $IDEAVIMRC -> $TARGET_IDEAVIMRC"
+fi
 
 # --- install or update Vundle ----------------------------------------------
 if [ -d "$VUNDLE_DIR/.git" ]; then

@@ -158,6 +158,11 @@ set hlsearch
 
 " completion setup (add dictionary completion)
 set complete+=k
+" point 'k' completion at a system word list when available; on Windows there
+" is no standard location so it silently falls back to runtimepath word files.
+if !has("win32") && filereadable('/usr/share/dict/words')
+    set dictionary+=/usr/share/dict/words
+endif
 
 " tab completion
 set wildmenu
@@ -183,8 +188,11 @@ set incsearch
 set ignorecase
 set smartcase
 
-" Use the / instead of \
-set shellslash
+" Use the / instead of \ (Windows only; has no effect on Unix and errors in
+" some builds when set unconditionally)
+if has("win32")
+    set shellslash
+endif
 
 " no word wrap
 set nowrap
@@ -209,10 +217,10 @@ set undofile
 set sessionoptions=buffers,resize,winpos,winsize
 
 " set the language to everything NOT American English.
-set spelllang=en_gb,en_nx,en_au,en_ca
+set spelllang=en_gb,en_au,en_ca
 
 " ensure that all auto-formatting is minimal
-set formatoptions=""
+set formatoptions=
 
 " these are set up at the recommendation of Steve Losh's 'Learn Vimscript the Hardway'
 if has("autocmd")

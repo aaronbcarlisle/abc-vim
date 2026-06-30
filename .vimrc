@@ -40,11 +40,17 @@ if !has ("pycharm")
     " add Vundle to the runtimepath and point it at the platform's bundle dir.
     " expand() is required so $USERPROFILE resolves (Vimscript strings are
     " not environment-expanded on their own).
+    " guard the rtp+= so re-sourcing $MYVIMRC on save does not stack duplicate
+    " Vundle paths onto 'runtimepath'.
     if has ("win32")
-        set rtp+=$USERPROFILE/vimfiles/bundle/Vundle.vim
+        if &runtimepath !~# 'vimfiles[\\/]bundle[\\/]Vundle\.vim'
+            set rtp+=$USERPROFILE/vimfiles/bundle/Vundle.vim
+        endif
         call vundle#begin(expand('$USERPROFILE/vimfiles/bundle/'))
     else
-        set rtp+=~/.vim/bundle/Vundle.vim
+        if &runtimepath !~# '\.vim/bundle/Vundle\.vim'
+            set rtp+=~/.vim/bundle/Vundle.vim
+        endif
         call vundle#begin()
     endif
 
@@ -238,7 +244,7 @@ if has("autocmd")
        autocmd BufRead,BufNewFile *.ma setf mel
        autocmd BufRead,BufNewFile SConstruct setf python
        autocmd BufRead,BufNewFile wscript setf python
-       autocmd BufNewFile,BufRead *.z* setlocal filetype=zsh
+       autocmd BufNewFile,BufRead *.zsh,.zshrc,.zshenv,.zprofile,.zlogin,.zlogout setlocal filetype=zsh
    augroup END
 
    " filetype specific tabbing

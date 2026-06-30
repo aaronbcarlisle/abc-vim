@@ -22,6 +22,7 @@ $RepoUrl   = if ($env:ABC_VIM_REPO) { $env:ABC_VIM_REPO } else { 'https://github
 $VundleUrl = 'https://github.com/VundleVim/Vundle.vim.git'
 $VimDir    = Join-Path $env:USERPROFILE 'vimfiles'
 $Vimrc     = Join-Path $env:USERPROFILE '.vimrc'
+$IdeaVimrc = Join-Path $env:USERPROFILE '.ideavimrc'
 $VundleDir = Join-Path $VimDir 'bundle\Vundle.vim'
 
 # --- pretty logging --------------------------------------------------------
@@ -155,6 +156,28 @@ try {
 } catch {
     Copy-Item -LiteralPath $TargetVimrc -Destination $Vimrc -Force
     Write-Warn "Symlinks unavailable - copied .vimrc instead (edits in $Vimrc will not track the repo)."
+}
+
+# --- link .ideavimrc (IdeaVim support) -------------------------------------
+$TargetIdeaVimrc = Join-Path $VimDir '.ideavimrc'
+if (Test-Path $TargetIdeaVimrc) {
+    if (Test-Path $IdeaVimrc) {
+        $existing = Get-Item -LiteralPath $IdeaVimrc -Force
+        if (-not $existing.LinkType) {
+            $backup = "$IdeaVimrc.bak.$(Stamp)"
+            Write-Warn "Existing $IdeaVimrc found - backing it up to $backup"
+            Move-Item -LiteralPath $IdeaVimrc -Destination $backup
+        } else {
+            Remove-Item -LiteralPath $IdeaVimrc -Force
+        }
+    }
+    try {
+        New-Item -ItemType SymbolicLink -Path $IdeaVimrc -Target $TargetIdeaVimrc -ErrorAction Stop | Out-Null
+        Write-Info "Linked $IdeaVimrc -> $TargetIdeaVimrc"
+    } catch {
+        Copy-Item -LiteralPath $TargetIdeaVimrc -Destination $IdeaVimrc -Force
+        Write-Warn "Symlinks unavailable - copied .ideavimrc instead (edits in $IdeaVimrc will not track the repo)."
+    }
 }
 
 # --- install or update Vundle ----------------------------------------------

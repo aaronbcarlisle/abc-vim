@@ -28,8 +28,18 @@ elseif has ("unix")
     set backupdir=~/.vim/backup//
     set undodir=~/.vim/undo//
 
-    " this ensures the clipboard buffer works with linux terminal
-    set clipboard=unnamedplus
+    " this ensures the clipboard buffer works with linux terminal.
+    " 'unnamedplus' is an X11-only feature in classic Vim: on a build without
+    " +xterm_clipboard (the MSYS2/Git-Bash vim is one) setting it silently
+    " does nothing, so yanks never reach the system clipboard while puts still
+    " read it -- which looks like "p pastes whatever I copied before vim".
+    " Fall back to 'unnamed' (the '*' register), which on Windows is the real
+    " system clipboard.
+    if has('unnamedplus')
+        set clipboard=unnamedplus
+    else
+        set clipboard=unnamed
+    endif
     set shell=/bin/sh
 endif
 
@@ -129,8 +139,15 @@ set scrolloff=3
 " always set autoindenting on
 set autoindent
 
-" turn off error bells
+" turn off error bells. 'noerrorbells' only silences bells for error *messages*,
+" so Esc-in-normal-mode and a failed put still rang the bell -- which in a
+" terminal surfaces as a full-screen reverse-video flash (t_vb is "\e[?5h",
+" DECSCNM). 'belloff=all' stops the bell being generated at all, and clearing
+" t_vb removes the flash sequence itself as a backstop.
 set noerrorbells
+set belloff=all
+set novisualbell
+set t_vb=
 
 " show title in console title bar
 set title

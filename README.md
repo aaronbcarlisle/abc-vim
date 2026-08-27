@@ -5,7 +5,7 @@ My personal Vim setup for Linux, macOS, and Windows. Inspired by
 
 ## Install
 
-The installers are idempotent — re-running one is also how you update. Each
+The installers are idempotent; re-running one is also how you update. Each
 installs any missing dependencies (`git`, `vim`), puts the vim files in place,
 points `~/.vimrc` and `~/.ideavimrc` at them, and installs Vundle plus the
 plugins listed in the `.vimrc`.

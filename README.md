@@ -1,58 +1,75 @@
-ABC Vim
-================================
+# ABC Vim
 
-My personal Vim setup for Linux, macOS, and Windows. Built and inspired from https://github.com/irrigger/ir-vim.
+My personal Vim setup for Linux, macOS, and Windows. Inspired by
+[irrigger/ir-vim](https://github.com/irrigger/ir-vim).
 
----
+## Install
 
-# Install
-The installers are idempotent and safe to re-run. They install any missing
-dependencies (`git`, `vim`), clone the vim files, set up `~/.vimrc` and
-`~/.ideavimrc` (for IdeaVim users), install Vundle, and then install the
-plugins listed in the `.vimrc`. Existing directories are handled gracefully —
-an existing abc-vim checkout is updated in place, anything else (or an existing
-`~/.vimrc`) is backed up with a timestamp rather than overwritten.
+The installers are idempotent — re-running one is also how you update. Each
+installs any missing dependencies (`git`, `vim`), puts the vim files in place,
+points `~/.vimrc` and `~/.ideavimrc` at them, and installs Vundle plus the
+plugins listed in the `.vimrc`.
 
-If you run the installer from inside a local abc-vim checkout, it installs from
-that working tree (including any uncommitted edits) instead of cloning the
-remote; downloaded standalone, it clones the remote as usual.
+|              | Linux / macOS | Windows                     |
+| ------------ | ------------- | --------------------------- |
+| Vim files go | `~/.vim`      | `%USERPROFILE%\vimfiles`    |
+| Installer    | `install.sh`  | `install.ps1`               |
 
 ### Linux / macOS
-Download the installer, review it if you like, then run it:
 
-    curl -fsSL https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.sh -o abc-vim-install.sh
-    less abc-vim-install.sh   # optional: inspect before running
-    sh abc-vim-install.sh
+Download the installer (inspect it if you like), then run it:
 
-Or from a local clone:
+```sh
+curl -fsSL https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.sh -o abc-vim-install.sh
+sh abc-vim-install.sh
+```
 
-    git clone https://github.com/aaronbcarlisle/abc-vim.git ~/.vim && sh ~/.vim/install.sh
+Or clone first and install from the clone:
+
+```sh
+git clone https://github.com/aaronbcarlisle/abc-vim.git ~/.vim
+sh ~/.vim/install.sh
+```
 
 ### Windows (PowerShell)
-Download the installer, review it if you like, then run it:
 
-    iwr -useb https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.ps1 -OutFile abc-vim-install.ps1
-    notepad abc-vim-install.ps1   # optional: inspect before running
-    powershell -ExecutionPolicy Bypass -File abc-vim-install.ps1
+```powershell
+iwr -useb https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.ps1 -OutFile abc-vim-install.ps1
+powershell -ExecutionPolicy Bypass -File abc-vim-install.ps1
+```
 
-Or from a local clone:
+Or clone first and install from the clone:
 
-    git clone https://github.com/aaronbcarlisle/abc-vim.git $env:USERPROFILE\vimfiles; powershell -ExecutionPolicy Bypass -File $env:USERPROFILE\vimfiles\install.ps1
+```powershell
+git clone https://github.com/aaronbcarlisle/abc-vim.git $env:USERPROFILE\vimfiles
+powershell -ExecutionPolicy Bypass -File $env:USERPROFILE\vimfiles\install.ps1
+```
 
-> Dependency auto-install uses your system package manager
-> (`apt`/`dnf`/`yum`/`pacman`/`zypper`/`apk`/`brew`/`port` on Unix,
-> `winget`/`choco`/`scoop` on Windows). If none is available the installer tells
-> you which dependency to install by hand.
+### Notes
 
----
+- **Run from a checkout and it installs that working tree**, uncommitted edits
+  included, instead of cloning the remote. Downloaded standalone, it clones.
+- **Nothing is overwritten.** An abc-vim checkout already at the install path is
+  updated with `git pull --ff-only`; anything else there — plus any existing
+  `~/.vimrc` or `~/.ideavimrc` — is moved aside to a timestamped `.bak` first.
+- **Dependencies** are installed with whichever package manager is on `PATH`
+  (`apt`/`dnf`/`yum`/`pacman`/`zypper`/`apk`/`brew`/`port` on Unix,
+  `winget`/`choco`/`scoop` on Windows). If none is found, the installer names
+  the missing dependency and stops.
+- **Windows symlinks** need Developer Mode or an admin shell. Without them the
+  installer copies the config files instead, and edits to those copies will not
+  track the repo.
+- Set `ABC_VIM_REPO` to install from a fork.
 
-# Contributions
+## Credits
+
+Plugins, managed by [Vundle](https://github.com/VundleVim/Vundle.vim):
+
 - [jlanzarotta/bufexplorer](https://github.com/jlanzarotta/bufexplorer)
 - [jiangmiao/auto-pairs](https://github.com/jiangmiao/auto-pairs)
-- [irrigger/ir-vim](https://github.com/irrigger/ir-vim)
 - [nvie/vim-flake8](https://github.com/nvie/vim-flake8)
 - [octol/vim-cpp-enhanced-highlight](https://github.com/octol/vim-cpp-enhanced-highlight)
 - [preservim/nerdcommenter](https://github.com/preservim/nerdcommenter)
 - [tpope/vim-fugitive](https://github.com/tpope/vim-fugitive)
-- [VundleVim/Vundle.vim](https://github.com/VundleVim/Vundle.vim)
-- [w0ng/vim-hybrid](https://github.com/w0ng/vim-hybrid)
+- [w0ng/vim-hybrid](https://github.com/w0ng/vim-hybrid) (also vendored as
+  `colors/hybrid.vim`)

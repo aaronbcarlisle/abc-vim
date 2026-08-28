@@ -6,6 +6,14 @@ filetype off
 
 " system prep for unix/windows platforms
 if has ("win32")
+    " the vendored colors/hybrid.vim lives in the install dir. vim's default
+    " runtimepath only picks that up as $HOME/vimfiles, and $HOME is not always
+    " $USERPROFILE (git-bash/MSYS set it elsewhere), so add it explicitly or
+    " 'colorscheme hybrid' below fails silently and you get default colors.
+    if &runtimepath !~# 'vimfiles\($\|[\\/,]\)'
+        set rtp+=$USERPROFILE/vimfiles
+    endif
+
     " re-map swap, backup and undo directories
     set directory=$USERPROFILE/vimfiles/swap//
     set backupdir=$USERPROFILE/vimfiles/backup//
@@ -46,12 +54,19 @@ endif
 " git cannot track empty directories, so a fresh clone has no swap/backup/undo
 " dirs and 'undofile' writes would error. Create them here rather than relying
 " on the installer, so a plain clone works too.
-for s:dir in [&directory, &backupdir, &undodir]
-    let s:path = expand(substitute(s:dir, '/\+$', '', ''))
-    if !isdirectory(s:path)
-        call mkdir(s:path, 'p')
-    endif
-endfor
+" guarded on !has('ide'): IdeaVim sources this file via .ideavimrc but has no
+" 'directory'/'backupdir'/'undodir' and no mkdir(), so the loop would throw on
+" every IDE start. silent! keeps a failed mkdir (path exists as a file, parent
+" not writable) from aborting the rest of $MYVIMRC and silently dropping the
+" mappings and colorscheme below.
+if !has ("ide")
+    for s:dir in [&directory, &backupdir, &undodir]
+        let s:path = expand(substitute(s:dir, '/\+$', '', ''))
+        if !isdirectory(s:path) && !filereadable(s:path)
+            silent! call mkdir(s:path, 'p')
+        endif
+    endfor
+endif
 
 
 " IdeaVim sources this file via .ideavimrc but cannot run Vundle. IdeaVim

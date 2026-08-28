@@ -22,6 +22,7 @@ The installers are idempotent, so you can run them multiple times to update. Eac
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.sh -o abc-vim-install.sh
+less abc-vim-install.sh   # review before running -- it installs packages and moves files in $HOME
 sh abc-vim-install.sh
 ```
 
@@ -38,6 +39,7 @@ sh ~/.vim/install.sh
 
 ```powershell
 iwr -useb https://raw.githubusercontent.com/aaronbcarlisle/abc-vim/master/install.ps1 -OutFile abc-vim-install.ps1
+notepad abc-vim-install.ps1   # review before running -- it installs packages and moves files in $HOME
 powershell -ExecutionPolicy Bypass -File abc-vim-install.ps1
 ```
 
@@ -66,4 +68,7 @@ Plugins, managed by [Vundle](https://github.com/VundleVim/Vundle.vim):
 - [octol/vim-cpp-enhanced-highlight](https://github.com/octol/vim-cpp-enhanced-highlight)
 - [preservim/nerdcommenter](https://github.com/preservim/nerdcommenter)
 - [tpope/vim-fugitive](https://github.com/tpope/vim-fugitive)
-- [w0ng/vim-hybrid](https://github.com/w0ng/vim-hybrid) (also vendored as `colors/hybrid.vim`)
+
+Vendored, not installed by Vundle:
+
+- [w0ng/vim-hybrid](https://github.com/w0ng/vim-hybrid) — shipped directly as `colors/hybrid.vim`, so `:PluginInstall` will not fetch it

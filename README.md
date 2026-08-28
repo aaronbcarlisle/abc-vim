@@ -71,5 +71,6 @@ Plugins, managed by [Vundle](https://github.com/VundleVim/Vundle.vim):
 - [octol/vim-cpp-enhanced-highlight](https://github.com/octol/vim-cpp-enhanced-highlight)
 - [preservim/nerdcommenter](https://github.com/preservim/nerdcommenter)
 - [tpope/vim-fugitive](https://github.com/tpope/vim-fugitive)
-- [w0ng/vim-hybrid](https://github.com/w0ng/vim-hybrid) (also vendored as
-  `colors/hybrid.vim`)
+
+The [w0ng/vim-hybrid](https://github.com/w0ng/vim-hybrid) colorscheme is
+vendored directly as `colors/hybrid.vim`, so it works before Vundle has run.

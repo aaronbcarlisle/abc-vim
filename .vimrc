@@ -43,8 +43,21 @@ elseif has ("unix")
     set shell=/bin/sh
 endif
 
+" git cannot track empty directories, so a fresh clone has no swap/backup/undo
+" dirs and 'undofile' writes would error. Create them here rather than relying
+" on the installer, so a plain clone works too.
+for s:dir in [&directory, &backupdir, &undodir]
+    let s:path = expand(substitute(s:dir, '/\+$', '', ''))
+    if !isdirectory(s:path)
+        call mkdir(s:path, 'p')
+    endif
+endfor
 
-if !has ("pycharm")
+
+" IdeaVim sources this file via .ideavimrc but cannot run Vundle. IdeaVim
+" exposes has('ide'); there is no has('pycharm') -- that always returned 0, so
+" this guard never actually fired.
+if !has ("ide")
     " -- Vundle Setup --
 
     " add Vundle to the runtimepath and point it at the platform's bundle dir.
@@ -71,7 +84,6 @@ if !has ("pycharm")
     Plugin 'octol/vim-cpp-enhanced-highlight'
     Plugin 'preservim/nerdcommenter'
     Plugin 'tpope/vim-fugitive'
-    Plugin 'w0ng/vim-hybrid'
 
     call vundle#end()
 endif
@@ -345,7 +357,7 @@ endif
 vnoremap < <gv
 vnoremap > >gv
 
-if !has ("pycharm")
+if !has ("ide")
 
     " fast install Plugins
     nnoremap <Leader>p :PluginInstall<CR>

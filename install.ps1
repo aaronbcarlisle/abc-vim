@@ -43,6 +43,24 @@ function Write-Warn($m) { Write-Host "[abc-vim] $m" -ForegroundColor Yellow }
 function Write-Err ($m) { Write-Host "[abc-vim] $m" -ForegroundColor Red }
 
 function Stamp { Get-Date -Format 'yyyyMMddHHmmss' }
+
+# Symlink $Link -> $Target (needs Developer Mode or admin); fall back to a copy.
+# New-Item needs admin on Windows PowerShell 5.1 even with Developer Mode on,
+# while mklink honors Developer Mode, so try that before copying.
+function Link-File($Target, $Link) {
+    $ErrorActionPreference = 'Continue'
+    try {
+        New-Item -ItemType SymbolicLink -Path $Link -Target $Target -ErrorAction Stop | Out-Null
+    } catch {
+        & cmd /c mklink $Link $Target *> $null
+        if ($LASTEXITCODE -ne 0) {
+            Copy-Item -LiteralPath $Target -Destination $Link -Force
+            Write-Warn "Symlinks unavailable - copied $Target to $Link instead (edits in $Link will not track the repo; enable Developer Mode and re-run to link)."
+            return
+        }
+    }
+    Write-Info "Linked $Link -> $Target"
+}
 function Have($cmd) { [bool](Get-Command $cmd -ErrorAction SilentlyContinue) }
 
 # --- dependency installation -----------------------------------------------
@@ -162,14 +180,7 @@ if (Test-Path $Vimrc) {
     }
 }
 
-# Prefer a symlink (needs Developer Mode or admin); fall back to a plain copy.
-try {
-    New-Item -ItemType SymbolicLink -Path $Vimrc -Target $TargetVimrc -ErrorAction Stop | Out-Null
-    Write-Info "Linked $Vimrc -> $TargetVimrc"
-} catch {
-    Copy-Item -LiteralPath $TargetVimrc -Destination $Vimrc -Force
-    Write-Warn "Symlinks unavailable - copied .vimrc instead (edits in $Vimrc will not track the repo)."
-}
+Link-File $TargetVimrc $Vimrc
 
 # --- link .ideavimrc (IdeaVim support) -------------------------------------
 $TargetIdeaVimrc = Join-Path $VimDir '.ideavimrc'
@@ -184,13 +195,7 @@ if (Test-Path $TargetIdeaVimrc) {
             Remove-Item -LiteralPath $IdeaVimrc -Force
         }
     }
-    try {
-        New-Item -ItemType SymbolicLink -Path $IdeaVimrc -Target $TargetIdeaVimrc -ErrorAction Stop | Out-Null
-        Write-Info "Linked $IdeaVimrc -> $TargetIdeaVimrc"
-    } catch {
-        Copy-Item -LiteralPath $TargetIdeaVimrc -Destination $IdeaVimrc -Force
-        Write-Warn "Symlinks unavailable - copied .ideavimrc instead (edits in $IdeaVimrc will not track the repo)."
-    }
+    Link-File $TargetIdeaVimrc $IdeaVimrc
 }
 
 # --- install or update Vundle ----------------------------------------------
@@ -208,8 +213,14 @@ if (Test-Path (Join-Path $VundleDir '.git')) {
 
 # --- install the plugins ---------------------------------------------------
 Write-Info 'Installing and updating plugins via Vundle...'
-vim +PluginUpdate +qall 2>$null | Out-Null
-# $ErrorActionPreference='Stop' does not trip on native exit codes, so check it.
+# With output redirected vim warns "Output is not to a terminal" on stderr,
+# which Windows PowerShell 5.1 turns into a terminating error under
+# $ErrorActionPreference='Stop'. Relax it for this call only, and check the
+# exit code instead.
+& {
+    $ErrorActionPreference = 'Continue'
+    vim +PluginUpdate +qall *> $null
+}
 if ($LASTEXITCODE -ne 0) {
     throw "Vim exited with code $LASTEXITCODE during plugin installation. Re-run 'vim +PluginUpdate' to retry."
 }

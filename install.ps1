@@ -9,10 +9,11 @@
 #
 # This script is idempotent and safe to re-run. It will:
 #   1. Install missing dependencies (git, vim) via winget/choco/scoop.
-#   2. Clone (or update) the abc-vim files into %USERPROFILE%\vimfiles.
+#   2. Clone (or update) the abc-vim files into %USERPROFILE%\vimfiles
+#      (or update an existing checkout in %USERPROFILE%\.vim).
 #   3. Place .vimrc in %USERPROFILE% (symlink if possible, otherwise a copy).
 #   4. Install (or update) Vundle.
-#   5. Install the plugins listed in the .vimrc.
+#   5. Install (and update) the plugins listed in the .vimrc.
 # ============================================================================
 
 #Requires -Version 5
@@ -23,6 +24,17 @@ $VundleUrl = 'https://github.com/VundleVim/Vundle.vim.git'
 $VimDir    = Join-Path $env:USERPROFILE 'vimfiles'
 $Vimrc     = Join-Path $env:USERPROFILE '.vimrc'
 $IdeaVimrc = Join-Path $env:USERPROFILE '.ideavimrc'
+
+# install.sh under Git Bash installs to ~/.vim instead, and the .vimrc finds
+# either. If that is where the existing abc-vim checkout lives, update it
+# rather than creating a second copy in vimfiles (gvim and Git Bash's vim would
+# then each use a different one).
+$AltVimDir = Join-Path $env:USERPROFILE '.vim'
+if (-not (Test-Path (Join-Path $VimDir '.git')) -and
+    (Test-Path (Join-Path $AltVimDir '.git')) -and
+    (Test-Path (Join-Path $AltVimDir 'colors/hybrid.vim'))) {
+    $VimDir = $AltVimDir
+}
 $VundleDir = Join-Path $VimDir 'bundle\Vundle.vim'
 
 # --- pretty logging --------------------------------------------------------
@@ -104,7 +116,8 @@ if ($ScriptDir) {
 
 # --- clone, copy, or update the vim files ----------------------------------
 if ($LocalSrc -and ((Resolve-Full $LocalSrc) -ieq (Resolve-Full $VimDir))) {
-    Write-Info "Running from the canonical checkout at $VimDir - using it in place."
+    Write-Info "Running from the canonical checkout at $VimDir - updating it in place."
+    Invoke-Git @('-C', $VimDir, 'pull', '--ff-only') -WarnOnFail "Could not fast-forward $VimDir; leaving it as-is." | Out-Null
 } elseif ($LocalSrc) {
     Write-Info "Installing from local checkout $LocalSrc"
     if (Test-Path $VimDir) {
@@ -194,11 +207,11 @@ if (Test-Path (Join-Path $VundleDir '.git')) {
 }
 
 # --- install the plugins ---------------------------------------------------
-Write-Info 'Installing plugins via Vundle...'
-vim +PluginInstall +qall 2>$null | Out-Null
+Write-Info 'Installing and updating plugins via Vundle...'
+vim +PluginUpdate +qall 2>$null | Out-Null
 # $ErrorActionPreference='Stop' does not trip on native exit codes, so check it.
 if ($LASTEXITCODE -ne 0) {
-    throw "Vim exited with code $LASTEXITCODE during plugin installation. Re-run 'vim +PluginInstall' to retry."
+    throw "Vim exited with code $LASTEXITCODE during plugin installation. Re-run 'vim +PluginUpdate' to retry."
 }
 
 Write-Info 'All done! Start vim to enjoy your ABC Vim setup.'

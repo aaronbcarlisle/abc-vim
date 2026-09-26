@@ -10,10 +10,11 @@
 #
 # This script is idempotent and safe to re-run. It will:
 #   1. Install missing dependencies (git, vim) using your package manager.
-#   2. Clone (or update) the abc-vim files into ~/.vim.
+#   2. Clone (or update) the abc-vim files into ~/.vim (or update an
+#      existing checkout in ~/vimfiles).
 #   3. Link ~/.vimrc to the tracked config.
 #   4. Install (or update) Vundle.
-#   5. Install the plugins listed in the .vimrc.
+#   5. Install (and update) the plugins listed in the .vimrc.
 # ============================================================================
 
 set -eu
@@ -23,6 +24,14 @@ VUNDLE_URL="https://github.com/VundleVim/Vundle.vim.git"
 VIM_DIR="$HOME/.vim"
 VIMRC="$HOME/.vimrc"
 IDEAVIMRC="$HOME/.ideavimrc"
+
+# On Windows, install.ps1 installs to ~/vimfiles instead, and the .vimrc finds
+# either. If that is where the existing abc-vim checkout lives, update it
+# rather than creating a second copy in ~/.vim.
+if [ ! -d "$VIM_DIR/.git" ] && [ -d "$HOME/vimfiles/.git" ] && \
+   [ -f "$HOME/vimfiles/colors/hybrid.vim" ]; then
+    VIM_DIR="$HOME/vimfiles"
+fi
 VUNDLE_DIR="$VIM_DIR/bundle/Vundle.vim"
 
 # --- pretty logging --------------------------------------------------------
@@ -99,6 +108,10 @@ SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" 2>/dev/null && pwd -P) || SCRI
 LOCAL_SRC=""
 if [ -n "$SCRIPT_DIR" ]; then
     src_top=$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null) || src_top=""
+    # Git for Windows prints C:/Users/..., while $HOME is /c/Users/... under
+    # Git Bash: canonicalize so the in-place check below sees the same dir
+    # (otherwise it tries to move the checkout it is running from).
+    [ -n "$src_top" ] && src_top=$(CDPATH='' cd -- "$src_top" 2>/dev/null && pwd -P) || true
     # Require markers specific to abc-vim, not just any repo with a root .vimrc,
     # so we never recursively copy an unrelated dotfiles/home tree into ~/.vim.
     if [ -n "$src_top" ] && [ -f "$src_top/.vimrc" ] && \
@@ -108,8 +121,12 @@ if [ -n "$SCRIPT_DIR" ]; then
 fi
 
 # --- clone, copy, or update the vim files ----------------------------------
-if [ -n "$LOCAL_SRC" ] && [ "$LOCAL_SRC" = "$VIM_DIR" ]; then
-    info "Running from the canonical checkout at $VIM_DIR - using it in place."
+VIM_DIR_REAL=""
+[ -d "$VIM_DIR" ] && VIM_DIR_REAL=$(CDPATH='' cd -- "$VIM_DIR" && pwd -P)
+
+if [ -n "$LOCAL_SRC" ] && [ "$LOCAL_SRC" = "$VIM_DIR_REAL" ]; then
+    info "Running from the canonical checkout at $VIM_DIR - updating it in place."
+    git -C "$VIM_DIR" pull --ff-only || warn "Could not fast-forward $VIM_DIR; leaving it as-is."
 elif [ -n "$LOCAL_SRC" ]; then
     info "Installing from local checkout $LOCAL_SRC"
     if [ -e "$VIM_DIR" ]; then
@@ -180,10 +197,10 @@ else
 fi
 
 # --- install the plugins ---------------------------------------------------
-info "Installing plugins via Vundle..."
-if vim +PluginInstall +qall > /dev/null 2>&1; then
+info "Installing and updating plugins via Vundle..."
+if vim +PluginUpdate +qall > /dev/null 2>&1; then
     info "All done! Start vim to enjoy your ABC Vim setup."
 else
-    err "Vim exited non-zero during plugin installation. Re-run 'vim +PluginInstall' to retry."
+    err "Vim exited non-zero during plugin installation. Re-run 'vim +PluginUpdate' to retry."
     exit 1
 fi

@@ -9,10 +9,11 @@
 #
 # This script is idempotent and safe to re-run. It will:
 #   1. Install missing dependencies (git, vim) via winget/choco/scoop.
-#   2. Clone (or update) the abc-vim files into %USERPROFILE%\vimfiles.
+#   2. Clone (or update) the abc-vim files into %USERPROFILE%\vimfiles
+#      (or update an existing checkout in %USERPROFILE%\.vim).
 #   3. Place .vimrc in %USERPROFILE% (symlink if possible, otherwise a copy).
 #   4. Install (or update) Vundle.
-#   5. Install the plugins listed in the .vimrc.
+#   5. Install (and update) the plugins listed in the .vimrc.
 # ============================================================================
 
 #Requires -Version 5
@@ -23,6 +24,17 @@ $VundleUrl = 'https://github.com/VundleVim/Vundle.vim.git'
 $VimDir    = Join-Path $env:USERPROFILE 'vimfiles'
 $Vimrc     = Join-Path $env:USERPROFILE '.vimrc'
 $IdeaVimrc = Join-Path $env:USERPROFILE '.ideavimrc'
+
+# install.sh under Git Bash installs to ~/.vim instead, and the .vimrc finds
+# either. If that is where the existing abc-vim checkout lives, update it
+# rather than creating a second copy in vimfiles (gvim and Git Bash's vim would
+# then each use a different one).
+$AltVimDir = Join-Path $env:USERPROFILE '.vim'
+if (-not (Test-Path (Join-Path $VimDir '.git')) -and
+    (Test-Path (Join-Path $AltVimDir '.git')) -and
+    (Test-Path (Join-Path $AltVimDir 'colors/hybrid.vim'))) {
+    $VimDir = $AltVimDir
+}
 $VundleDir = Join-Path $VimDir 'bundle\Vundle.vim'
 
 # --- pretty logging --------------------------------------------------------
@@ -31,6 +43,24 @@ function Write-Warn($m) { Write-Host "[abc-vim] $m" -ForegroundColor Yellow }
 function Write-Err ($m) { Write-Host "[abc-vim] $m" -ForegroundColor Red }
 
 function Stamp { Get-Date -Format 'yyyyMMddHHmmss' }
+
+# Symlink $Link -> $Target (needs Developer Mode or admin); fall back to a copy.
+# New-Item needs admin on Windows PowerShell 5.1 even with Developer Mode on,
+# while mklink honors Developer Mode, so try that before copying.
+function Link-File($Target, $Link) {
+    $ErrorActionPreference = 'Continue'
+    try {
+        New-Item -ItemType SymbolicLink -Path $Link -Target $Target -ErrorAction Stop | Out-Null
+    } catch {
+        & cmd /c mklink $Link $Target *> $null
+        if ($LASTEXITCODE -ne 0) {
+            Copy-Item -LiteralPath $Target -Destination $Link -Force
+            Write-Warn "Symlinks unavailable - copied $Target to $Link instead (edits in $Link will not track the repo; enable Developer Mode and re-run to link)."
+            return
+        }
+    }
+    Write-Info "Linked $Link -> $Target"
+}
 function Have($cmd) { [bool](Get-Command $cmd -ErrorAction SilentlyContinue) }
 
 # --- dependency installation -----------------------------------------------
@@ -104,7 +134,8 @@ if ($ScriptDir) {
 
 # --- clone, copy, or update the vim files ----------------------------------
 if ($LocalSrc -and ((Resolve-Full $LocalSrc) -ieq (Resolve-Full $VimDir))) {
-    Write-Info "Running from the canonical checkout at $VimDir - using it in place."
+    Write-Info "Running from the canonical checkout at $VimDir - updating it in place."
+    Invoke-Git @('-C', $VimDir, 'pull', '--ff-only') -WarnOnFail "Could not fast-forward $VimDir; leaving it as-is." | Out-Null
 } elseif ($LocalSrc) {
     Write-Info "Installing from local checkout $LocalSrc"
     if (Test-Path $VimDir) {
@@ -149,14 +180,7 @@ if (Test-Path $Vimrc) {
     }
 }
 
-# Prefer a symlink (needs Developer Mode or admin); fall back to a plain copy.
-try {
-    New-Item -ItemType SymbolicLink -Path $Vimrc -Target $TargetVimrc -ErrorAction Stop | Out-Null
-    Write-Info "Linked $Vimrc -> $TargetVimrc"
-} catch {
-    Copy-Item -LiteralPath $TargetVimrc -Destination $Vimrc -Force
-    Write-Warn "Symlinks unavailable - copied .vimrc instead (edits in $Vimrc will not track the repo)."
-}
+Link-File $TargetVimrc $Vimrc
 
 # --- link .ideavimrc (IdeaVim support) -------------------------------------
 $TargetIdeaVimrc = Join-Path $VimDir '.ideavimrc'
@@ -171,13 +195,7 @@ if (Test-Path $TargetIdeaVimrc) {
             Remove-Item -LiteralPath $IdeaVimrc -Force
         }
     }
-    try {
-        New-Item -ItemType SymbolicLink -Path $IdeaVimrc -Target $TargetIdeaVimrc -ErrorAction Stop | Out-Null
-        Write-Info "Linked $IdeaVimrc -> $TargetIdeaVimrc"
-    } catch {
-        Copy-Item -LiteralPath $TargetIdeaVimrc -Destination $IdeaVimrc -Force
-        Write-Warn "Symlinks unavailable - copied .ideavimrc instead (edits in $IdeaVimrc will not track the repo)."
-    }
+    Link-File $TargetIdeaVimrc $IdeaVimrc
 }
 
 # --- install or update Vundle ----------------------------------------------
@@ -194,11 +212,17 @@ if (Test-Path (Join-Path $VundleDir '.git')) {
 }
 
 # --- install the plugins ---------------------------------------------------
-Write-Info 'Installing plugins via Vundle...'
-vim +PluginInstall +qall 2>$null | Out-Null
-# $ErrorActionPreference='Stop' does not trip on native exit codes, so check it.
+Write-Info 'Installing and updating plugins via Vundle...'
+# With output redirected vim warns "Output is not to a terminal" on stderr,
+# which Windows PowerShell 5.1 turns into a terminating error under
+# $ErrorActionPreference='Stop'. Relax it for this call only, and check the
+# exit code instead.
+& {
+    $ErrorActionPreference = 'Continue'
+    vim +PluginUpdate +qall *> $null
+}
 if ($LASTEXITCODE -ne 0) {
-    throw "Vim exited with code $LASTEXITCODE during plugin installation. Re-run 'vim +PluginInstall' to retry."
+    throw "Vim exited with code $LASTEXITCODE during plugin installation. Re-run 'vim +PluginUpdate' to retry."
 }
 
 Write-Info 'All done! Start vim to enjoy your ABC Vim setup.'

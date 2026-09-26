@@ -33,6 +33,27 @@ err()  { printf '\033[0;31m[abc-vim]\033[0m %s\n' "$1" >&2; }
 stamp() { date +%Y%m%d%H%M%S; }
 have()  { command -v "$1" >/dev/null 2>&1; }
 
+# Git Bash / MSYS2 / Cygwin: a plain `ln -s` silently makes a *copy* there, so
+# ~/.vimrc would drift from the repo. Ask for a real Windows symlink (works
+# with Developer Mode or an admin shell); nativestrict makes ln fail instead of
+# copying, so link_file can say what actually happened.
+case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*)
+        export MSYS="${MSYS:+$MSYS }winsymlinks:nativestrict"
+        export CYGWIN="${CYGWIN:+$CYGWIN }winsymlinks:nativestrict"
+        ;;
+esac
+
+# link_file TARGET LINK - symlink LINK to TARGET, or copy when not allowed.
+link_file() {
+    if ln -s "$1" "$2" 2>/dev/null; then
+        info "Linked $2 -> $1"
+    else
+        cp "$1" "$2"
+        warn "Symlinks unavailable - copied $1 to $2 instead (edits in $2 will not track the repo; enable Windows Developer Mode and re-run to link)."
+    fi
+}
+
 # --- dependency installation -----------------------------------------------
 # Picks whatever package manager is available. Uses sudo only when not root.
 install_pkg() {
@@ -124,31 +145,25 @@ fi
 
 if [ -L "$VIMRC" ]; then
     # Already a symlink - just repoint it.
-    ln -sf "$TARGET_VIMRC" "$VIMRC"
+    rm -f "$VIMRC"
 elif [ -e "$VIMRC" ]; then
     backup="$VIMRC.bak.$(stamp)"
     warn "Existing $VIMRC found - backing it up to $backup"
     mv "$VIMRC" "$backup"
-    ln -s "$TARGET_VIMRC" "$VIMRC"
-else
-    ln -s "$TARGET_VIMRC" "$VIMRC"
 fi
-info "Linked $VIMRC -> $TARGET_VIMRC"
+link_file "$TARGET_VIMRC" "$VIMRC"
 
 # --- link ~/.ideavimrc (IdeaVim support) -----------------------------------
 TARGET_IDEAVIMRC="$VIM_DIR/.ideavimrc"
 if [ -f "$TARGET_IDEAVIMRC" ]; then
     if [ -L "$IDEAVIMRC" ]; then
-        ln -sf "$TARGET_IDEAVIMRC" "$IDEAVIMRC"
+        rm -f "$IDEAVIMRC"
     elif [ -e "$IDEAVIMRC" ]; then
         backup="$IDEAVIMRC.bak.$(stamp)"
         warn "Existing $IDEAVIMRC found - backing it up to $backup"
         mv "$IDEAVIMRC" "$backup"
-        ln -s "$TARGET_IDEAVIMRC" "$IDEAVIMRC"
-    else
-        ln -s "$TARGET_IDEAVIMRC" "$IDEAVIMRC"
     fi
-    info "Linked $IDEAVIMRC -> $TARGET_IDEAVIMRC"
+    link_file "$TARGET_IDEAVIMRC" "$IDEAVIMRC"
 fi
 
 # --- install or update Vundle ----------------------------------------------

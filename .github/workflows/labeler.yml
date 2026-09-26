@@ -1,0 +1,27 @@
+name: labeler
+
+# pull_request_target lets Dependabot and fork PRs get labels too. It's safe
+# here: labeler reads .github/labeler.yml and the changed-file list through the
+# API and never checks out or runs the PR's code.
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: PR number to label
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/labeler@v7
+        with:
+          # empty on PR events, so labeler uses the PR that triggered the run
+          pr-number: ${{ inputs.pr }}

@@ -1,0 +1,23 @@
+name: auto-assign
+
+# pull_request_target gives Dependabot and fork PRs a token that can assign.
+# It's safe here because the job never checks out or runs the PR's code.
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Assign the repo owner
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          OWNER: ${{ github.repository_owner }}
+        run: gh api --method POST "repos/$REPO/issues/$PR/assignees" -f "assignees[]=$OWNER" --silent

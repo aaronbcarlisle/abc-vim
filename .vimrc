@@ -4,21 +4,50 @@
 set nocompatible
 filetype off
 
-" system prep for unix/windows platforms
-if has ("win32")
-    " the vendored colors/hybrid.vim lives in the install dir. vim's default
-    " runtimepath only picks that up as $HOME/vimfiles, and $HOME is not always
-    " $USERPROFILE (git-bash/MSYS set it elsewhere), so add it explicitly or
-    " 'colorscheme hybrid' below fails silently and you get default colors.
-    if &runtimepath !~# 'vimfiles\($\|[\\/,]\)'
-        set rtp+=$USERPROFILE/vimfiles
-    endif
+" locate the abc-vim files. install.sh puts them in ~/.vim, install.ps1 in
+" %USERPROFILE%\vimfiles. On Windows, gvim (win32) and Git Bash's vim (unix)
+" both read this same ~/.vimrc but default to different dirs, so use whichever
+" checkout actually exists -- marked by the vendored colors/hybrid.vim --
+" preferring the platform default. Guarded on !has('ide'): IdeaVim sources
+" this file but has none of these dirs.
+if !has ("ide")
+    let s:candidates = has("win32")
+          \ ? ['$USERPROFILE/vimfiles', '$USERPROFILE/.vim']
+          \ : ['~/.vim', '~/vimfiles']
+    let s:vim_dir = expand(s:candidates[0])
+    for s:dir in s:candidates
+        if filereadable(expand(s:dir . '/colors/hybrid.vim'))
+            let s:vim_dir = expand(s:dir)
+            break
+        endif
+    endfor
+    let s:vim_dir = substitute(s:vim_dir, '\\', '/', 'g')
+
+    " add a dir to 'runtimepath' unless it is already there, so re-sourcing
+    " $MYVIMRC on save does not stack duplicates.
+    function! s:AddRtp(dir, prepend) abort
+        for l:p in split(&runtimepath, ',')
+            if substitute(expand(l:p), '\\', '/', 'g') ==? a:dir
+                return
+            endif
+        endfor
+        let &runtimepath = a:prepend ? a:dir . ',' . &runtimepath
+              \ : &runtimepath . ',' . a:dir
+    endfunction
+
+    " vim only adds ~/.vim or ~/vimfiles (whichever is its default) by itself;
+    " without this 'colorscheme hybrid' below fails silently when the setup
+    " lives in the other one.
+    call s:AddRtp(s:vim_dir, 1)
 
     " re-map swap, backup and undo directories
-    set directory=$USERPROFILE/vimfiles/swap//
-    set backupdir=$USERPROFILE/vimfiles/backup//
-    set undodir=$USERPROFILE/vimfiles/undo//
+    let &directory = s:vim_dir . '/swap//'
+    let &backupdir = s:vim_dir . '/backup//'
+    let &undodir = s:vim_dir . '/undo//'
+endif
 
+" system prep for unix/windows platforms
+if has ("win32")
     set clipboard=unnamed
     set shell=cmd
 
@@ -31,11 +60,6 @@ if has ("win32")
     endif
 
 elseif has ("unix")
-    " re-map swap, backup and undo directories
-    set directory=~/.vim/swap//
-    set backupdir=~/.vim/backup//
-    set undodir=~/.vim/undo//
-
     " this ensures the clipboard buffer works with linux terminal.
     " 'unnamedplus' is an X11-only feature in classic Vim: on a build without
     " +xterm_clipboard (the MSYS2/Git-Bash vim is one) setting it silently
@@ -75,32 +99,25 @@ endif
 if !has ("ide")
     " -- Vundle Setup --
 
-    " add Vundle to the runtimepath and point it at the platform's bundle dir.
-    " expand() is required so $USERPROFILE resolves (Vimscript strings are
-    " not environment-expanded on their own).
-    " guard the rtp+= so re-sourcing $MYVIMRC on save does not stack duplicate
-    " Vundle paths onto 'runtimepath'.
-    if has ("win32")
-        if &runtimepath !~# 'vimfiles[\\/]bundle[\\/]Vundle\.vim'
-            set rtp+=$USERPROFILE/vimfiles/bundle/Vundle.vim
-        endif
-        call vundle#begin(expand('$USERPROFILE/vimfiles/bundle/'))
-    else
-        if &runtimepath !~# '\.vim/bundle/Vundle\.vim'
-            set rtp+=~/.vim/bundle/Vundle.vim
-        endif
-        call vundle#begin()
+    " Vundle lives in bundle/ under the abc-vim dir found above. If it is not
+    " installed yet (a plain clone before running an installer), skip the
+    " plugins instead of failing with E117 on vundle#begin at every start.
+    let s:bundle_dir = s:vim_dir . '/bundle'
+    if isdirectory(s:bundle_dir . '/Vundle.vim')
+        call s:AddRtp(s:bundle_dir . '/Vundle.vim', 0)
+        call vundle#begin(s:bundle_dir)
+
+        " some useful plugins
+        Plugin 'jlanzarotta/bufexplorer'
+        Plugin 'jiangmiao/auto-pairs'
+        Plugin 'nvie/vim-flake8'
+        Plugin 'octol/vim-cpp-enhanced-highlight'
+        Plugin 'preservim/nerdcommenter'
+        Plugin 'tpope/vim-fugitive'
+        Plugin 'aaronbcarlisle/python-syntax-enhanced'
+
+        call vundle#end()
     endif
-
-    " some useful plugins
-    Plugin 'jlanzarotta/bufexplorer'
-    Plugin 'jiangmiao/auto-pairs'
-    Plugin 'nvie/vim-flake8'
-    Plugin 'octol/vim-cpp-enhanced-highlight'
-    Plugin 'preservim/nerdcommenter'
-    Plugin 'tpope/vim-fugitive'
-
-    call vundle#end()
 endif
 
 " -- Basic Settings ---
@@ -125,7 +142,7 @@ highlight ColorColumn ctermbg=DarkGray
 
 " turn on line numbers (with relative line numbers for easier movement)
 set number
-set relativenumber
+set norelativenumber
 
 " autosource vim on save
 augroup reload_vimrc
@@ -324,6 +341,9 @@ set foldlevel=1 "this is just what i use
 
 " -- Key Bindings ---
 
+" show the syntax group under the cursor (for checking highlighting)
+nnoremap <F10> :echo synIDattr(synID(line('.'), col('.'), 1), 'name')<CR>
+
 " write/quit keybinds
 nnoremap <Leader>w :w!<CR>
 nnoremap <Leader>q :q<CR>
@@ -387,8 +407,23 @@ if !has ("ide")
 
     " -- Plugin Settings --
 
-    " Additional python syntax highlighting
+    " Additional python syntax highlighting (read by python-syntax-enhanced
+    " and by Vim's own python syntax)
     let python_highlight_all=1
+
+    " PEP 8 hanging indents for Vim's python indent: one level after an open
+    " bracket, and the closing bracket back at the start of the opening line:
+    "   foo = [
+    "       1, 2, 3,
+    "   ]
+    " extend() rather than a fresh {} so re-sourcing $MYVIMRC keeps the
+    " defaults the indent script already filled in.
+    let g:python_indent = extend(get(g:, 'python_indent', {}), {
+          \ 'open_paren': 'shiftwidth()',
+          \ 'nested_paren': 'shiftwidth()',
+          \ 'continue': 'shiftwidth()',
+          \ 'closed_paren_align_last_line': v:false,
+          \ }, 'force')
 
     " set bufexplorer keybinds
     let g:bufExplorerSplitHorzSize=1

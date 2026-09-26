@@ -16,6 +16,10 @@ The installers are idempotent, so you can run them multiple times to update. Eac
 | Vim files go | `~/.vim`      | `%USERPROFILE%\vimfiles`    |
 | Installer    | `install.sh`  | `install.ps1`               |
 
+On Windows, gvim and Git Bash's vim share one setup: the `.vimrc` finds the
+abc-vim files in either `~/.vim` or `%USERPROFILE%\vimfiles`, so it doesn't
+matter which installer you used.
+
 ### Linux / macOS
 
 **Option 1: Download and run the installer**
@@ -55,7 +59,7 @@ powershell -ExecutionPolicy Bypass -File $env:USERPROFILE\vimfiles\install.ps1
 - **Installing from a local checkout**: If you run the installer from a cloned repository, it installs from that local copy (including any uncommitted changes). If you download the installer standalone, it clones the remote repository instead.
 - **Safe file handling**: Existing files are never overwritten. If abc-vim is already installed, it updates with `git pull --ff-only`. Any other existing files, including ~/.vimrc or ~/.ideavimrc, are moved to a timestamped .bak file first.
 - **Package manager detection**: Dependencies are installed using whatever package manager is available on your system (apt, dnf, yum, pacman, zypper, apk, brew, or port on Unix; winget, choco, or scoop on Windows). If no package manager is found, the installer will stop and let you know what's missing.
-- **Windows symlinks**: Creating symlinks on Windows requires Developer Mode or an admin shell. If these aren't available, the installer copies the config files instead. Note that edits to copied files won't sync with the repository.
+- **Windows symlinks**: Creating symlinks on Windows requires Developer Mode or an admin shell. This applies to `install.sh` under Git Bash too, which asks for native symlinks. If these aren't available, the installer copies the config files instead and says so. Note that edits to copied files won't sync with the repository.
 - **Custom fork installation**: Set the `ABC_VIM_REPO` environment variable to install from your own fork.
 
 ## Credits
@@ -68,6 +72,7 @@ Plugins, managed by [Vundle](https://github.com/VundleVim/Vundle.vim):
 - [octol/vim-cpp-enhanced-highlight](https://github.com/octol/vim-cpp-enhanced-highlight)
 - [preservim/nerdcommenter](https://github.com/preservim/nerdcommenter)
 - [tpope/vim-fugitive](https://github.com/tpope/vim-fugitive)
+- [aaronbcarlisle/python-syntax-enhanced](https://github.com/aaronbcarlisle/python-syntax-enhanced)
 
 Vendored, not installed by Vundle:
 

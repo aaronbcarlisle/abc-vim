@@ -6,10 +6,13 @@ name: labeler
 on:
   pull_request_target:
     types: [opened, reopened, synchronize]
+  # A manual run applies only the changed-files rules: labeler reads the branch
+  # name from the pull_request event, which a manual run doesn't have. To get
+  # the head-branch labels on an older PR, close and reopen it, or push to it.
   workflow_dispatch:
     inputs:
       pr:
-        description: PR number to label
+        description: PR number to label (changed-files rules only)
         required: true
 
 permissions:

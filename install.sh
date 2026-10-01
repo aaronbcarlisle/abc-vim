@@ -118,7 +118,9 @@ reset_in_place() {
     fi
     backup="$1.bak.$(stamp)"
     warn "Copying $1 to $backup, then resetting it to its upstream (--force)."
-    cp -a "$1" "$backup"
+    # Copy the physical directory: when DIR is a symlink, cp -a would copy just
+    # the link, and the reset below would then change the "backup" too.
+    cp -a "$(CDPATH='' cd -- "$1" && pwd -P)" "$backup"
     if ! git -C "$1" fetch; then
         warn "git fetch failed in $1; leaving it as-is (backup at $backup)."
         return 0

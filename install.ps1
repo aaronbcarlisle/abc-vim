@@ -194,7 +194,12 @@ function Reset-InPlace($Dir) {
     }
     $backup = "$Dir.bak.$(Stamp)"
     Write-Warn "Copying $Dir to $backup, then resetting it to its upstream (-Force)."
-    Copy-Item -LiteralPath $Dir -Destination $backup -Recurse -Force -ErrorAction Stop
+    # Copy the physical directory (git prints it with links resolved): when
+    # $Dir is a symlink or junction, copying the link would leave a "backup"
+    # that the reset below changes too.
+    $physical = (& git -C $Dir rev-parse --show-toplevel)
+    if ($LASTEXITCODE -ne 0 -or -not $physical) { throw "Could not resolve $Dir; leaving it as-is." }
+    Copy-Item -LiteralPath $physical -Destination $backup -Recurse -Force -ErrorAction Stop
     Invoke-Git @('-C', $Dir, 'fetch') -WarnOnFail "git fetch failed in $Dir; leaving it as-is (backup at $backup)." | Out-Null
     if ($LASTEXITCODE -ne 0) { return }
     Invoke-Git @('-C', $Dir, 'reset', '--hard', '@{u}') | Out-Null

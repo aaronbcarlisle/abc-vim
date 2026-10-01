@@ -8,6 +8,13 @@
 #   less abc-vim-install.sh   # optional: review before running
 #   sh abc-vim-install.sh
 #
+# Options:
+#   --force     Replace an existing abc-vim (or Vundle) checkout that has local
+#               changes or cannot fast-forward, instead of leaving it as-is.
+#               The old checkout is moved (or, when running from it, copied) to
+#               a timestamped .bak.<stamp> backup first.
+#   -h, --help  Show this help and exit.
+#
 # This script is idempotent and safe to re-run. It will:
 #   1. Install missing dependencies (git, vim) using your package manager.
 #   2. Clone (or update) the abc-vim files into ~/.vim (or update an
@@ -15,9 +22,36 @@
 #   3. Link ~/.vimrc to the tracked config.
 #   4. Install (or update) Vundle.
 #   5. Install (and update) the plugins listed in the .vimrc.
+# Anything it replaces (~/.vimrc, ~/.ideavimrc, a ~/.vim that is not an abc-vim
+# checkout, or with --force a checkout with local changes) is moved to a
+# timestamped .bak.<stamp> backup first; nothing is deleted.
 # ============================================================================
 
 set -eu
+
+usage() {
+    cat <<USAGE
+Usage: sh install.sh [--force] [-h|--help]
+
+Install or update ABC Vim in ~/.vim.
+
+  --force     Replace an abc-vim or Vundle checkout that has local changes or
+              cannot fast-forward (it is backed up to <dir>.bak.<stamp> first)
+              instead of leaving it as-is.
+  -h, --help  Show this help and exit.
+USAGE
+}
+
+FORCE=0
+for arg in "$@"; do
+    case "$arg" in
+        --force)   FORCE=1 ;;
+        -h|--help) usage; exit 0 ;;
+        *)         printf 'install.sh: unknown option: %s\n\n' "$arg" >&2
+                   usage >&2
+                   exit 1 ;;
+    esac
+done
 
 REPO_URL="${ABC_VIM_REPO:-https://github.com/aaronbcarlisle/abc-vim.git}"
 VUNDLE_URL="https://github.com/VundleVim/Vundle.vim.git"
@@ -41,6 +75,58 @@ err()  { printf '\033[0;31m[abc-vim]\033[0m %s\n' "$1" >&2; }
 
 stamp() { date +%Y%m%d%H%M%S; }
 have()  { command -v "$1" >/dev/null 2>&1; }
+
+# has_upstream DIR - true when the checkout's branch tracks a remote branch.
+has_upstream() { git -C "$1" rev-parse --verify -q '@{u}' >/dev/null 2>&1; }
+
+# has_local_changes DIR - true when the checkout has uncommitted changes to
+# tracked files, or commits its upstream does not have. Untracked files are
+# ignored: vim itself writes some (netrw history, help tags).
+has_local_changes() {
+    [ -n "$(git -C "$1" status --porcelain --untracked-files=no 2>/dev/null)" ] && return 0
+    has_upstream "$1" || return 1
+    [ -n "$(git -C "$1" rev-list '@{u}..HEAD' 2>/dev/null)" ]
+}
+
+# update_checkout DIR URL NAME - fast-forward the git checkout at DIR. With
+# --force, a checkout that has local changes or cannot fast-forward is moved
+# to DIR.bak.<stamp> and re-cloned from URL; without it, it is left as-is.
+update_checkout() {
+    if [ "$FORCE" -eq 1 ] && has_local_changes "$1"; then
+        warn "$1 has local changes - replacing it (--force)."
+    elif git -C "$1" pull --ff-only; then
+        return 0
+    elif [ "$FORCE" -eq 0 ]; then
+        warn "Could not fast-forward $3; leaving it as-is (re-run with --force to replace it)."
+        return 0
+    else
+        warn "Could not fast-forward $3 - replacing it (--force)."
+    fi
+    backup="$1.bak.$(stamp)"
+    warn "Moving $1 to $backup"
+    mv "$1" "$backup"
+    git clone "$2" "$1"
+}
+
+# reset_in_place DIR - --force for the checkout this script is running from,
+# which cannot be moved: copy it to DIR.bak.<stamp>, then hard-reset it to its
+# upstream branch.
+reset_in_place() {
+    if ! has_upstream "$1"; then
+        warn "$1 has no upstream branch to reset to; leaving it as-is."
+        return 0
+    fi
+    backup="$1.bak.$(stamp)"
+    warn "Copying $1 to $backup, then resetting it to its upstream (--force)."
+    # Copy the physical directory: when DIR is a symlink, cp -a would copy just
+    # the link, and the reset below would then change the "backup" too.
+    cp -a "$(CDPATH='' cd -- "$1" && pwd -P)" "$backup"
+    if ! git -C "$1" fetch; then
+        warn "git fetch failed in $1; leaving it as-is (backup at $backup)."
+        return 0
+    fi
+    git -C "$1" reset --hard '@{u}'
+}
 
 # Git Bash / MSYS2 / Cygwin: a plain `ln -s` silently makes a *copy* there, so
 # ~/.vimrc would drift from the repo. Ask for a real Windows symlink (works
@@ -126,7 +212,17 @@ VIM_DIR_REAL=""
 
 if [ -n "$LOCAL_SRC" ] && [ "$LOCAL_SRC" = "$VIM_DIR_REAL" ]; then
     info "Running from the canonical checkout at $VIM_DIR - updating it in place."
-    git -C "$VIM_DIR" pull --ff-only || warn "Could not fast-forward $VIM_DIR; leaving it as-is."
+    if [ "$FORCE" -eq 1 ] && has_local_changes "$VIM_DIR"; then
+        warn "$VIM_DIR has local changes."
+        reset_in_place "$VIM_DIR"
+    elif git -C "$VIM_DIR" pull --ff-only; then
+        :
+    elif [ "$FORCE" -eq 1 ]; then
+        warn "Could not fast-forward $VIM_DIR."
+        reset_in_place "$VIM_DIR"
+    else
+        warn "Could not fast-forward $VIM_DIR; leaving it as-is (re-run with --force to reset it)."
+    fi
 elif [ -n "$LOCAL_SRC" ]; then
     info "Installing from local checkout $LOCAL_SRC"
     if [ -e "$VIM_DIR" ]; then
@@ -139,7 +235,7 @@ elif [ -n "$LOCAL_SRC" ]; then
     cp -a "$LOCAL_SRC" "$VIM_DIR"
 elif [ -d "$VIM_DIR/.git" ]; then
     info "$VIM_DIR already exists - updating it instead of re-cloning."
-    git -C "$VIM_DIR" pull --ff-only || warn "Could not fast-forward $VIM_DIR; leaving it as-is."
+    update_checkout "$VIM_DIR" "$REPO_URL" "$VIM_DIR"
 elif [ -e "$VIM_DIR" ]; then
     # Something is already at ~/.vim but it is not an abc-vim checkout.
     backup="$VIM_DIR.bak.$(stamp)"
@@ -186,7 +282,7 @@ fi
 # --- install or update Vundle ----------------------------------------------
 if [ -d "$VUNDLE_DIR/.git" ]; then
     info "Vundle already installed - updating it."
-    git -C "$VUNDLE_DIR" pull --ff-only || warn "Could not fast-forward Vundle; leaving it as-is."
+    update_checkout "$VUNDLE_DIR" "$VUNDLE_URL" "Vundle"
 elif [ -e "$VUNDLE_DIR" ]; then
     backup="$VUNDLE_DIR.bak.$(stamp)"
     warn "$VUNDLE_DIR exists but is not a git checkout - moving it to $backup"

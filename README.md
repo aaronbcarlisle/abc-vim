@@ -54,10 +54,36 @@ git clone https://github.com/aaronbcarlisle/abc-vim.git $env:USERPROFILE\vimfile
 powershell -ExecutionPolicy Bypass -File $env:USERPROFILE\vimfiles\install.ps1
 ```
 
+### Replacing a modified install (`--force` / `-Force`)
+
+By default the installers update an existing abc-vim (or Vundle) checkout with
+`git pull --ff-only`, keeping any local commits or edits, and leave it alone
+(with a warning) if it can't fast-forward. To replace a checkout that has
+local changes or can't fast-forward with a fresh copy instead, add `--force`
+(Linux / macOS) or `-Force` (Windows) to the install command. The old checkout
+is backed up to `<dir>.bak.<timestamp>` first, so nothing is lost:
+
+```sh
+sh abc-vim-install.sh --force        # Option 1 (downloaded installer)
+sh ~/.vim/install.sh --force         # Option 2 (from your clone)
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File abc-vim-install.ps1 -Force                         # Option 1
+powershell -ExecutionPolicy Bypass -File $env:USERPROFILE\vimfiles\install.ps1 -Force       # Option 2
+```
+
+When run from the installed checkout itself (Option 2), the installer can't
+move the directory it is running from, so it copies it to the backup and then
+resets it to its upstream branch with `git fetch` and `git reset --hard`. If
+the branch has no upstream, it leaves the checkout as-is. Untracked files
+don't count as local changes. Use `-h` / `--help` (`-Help` on Windows) to see
+the options.
+
 ### How the installer works
 
 - **Installing from a local checkout**: If you run the installer from a cloned repository, it installs from that local copy (including any uncommitted changes). If you download the installer standalone, it clones the remote repository instead.
-- **Safe file handling**: Existing files are never overwritten. If abc-vim is already installed, it updates with `git pull --ff-only`. Any other existing files, including ~/.vimrc or ~/.ideavimrc, are moved to a timestamped .bak file first.
+- **Safe file handling**: Nothing is deleted. If abc-vim is already installed, it updates with `git pull --ff-only`, and a checkout that can't fast-forward is left as-is unless you pass `--force` / `-Force` (which also replaces a checkout with local edits or commits). Anything the installer replaces, including ~/.vimrc, ~/.ideavimrc, a ~/.vim that isn't an abc-vim checkout, or (with `--force`) a modified checkout, is moved or copied to a timestamped `.bak.<timestamp>` backup first.
 - **Package manager detection**: Dependencies are installed using whatever package manager is available on your system (apt, dnf, yum, pacman, zypper, apk, brew, or port on Unix; winget, choco, or scoop on Windows). If no package manager is found, the installer will stop and let you know what's missing.
 - **Windows symlinks**: Creating symlinks on Windows requires Developer Mode or an admin shell. This applies to `install.sh` under Git Bash too, which asks for native symlinks. If these aren't available, the installer copies the config files instead and says so. Note that edits to copied files won't sync with the repository.
 - **Custom fork installation**: Set the `ABC_VIM_REPO` environment variable to install from your own fork.

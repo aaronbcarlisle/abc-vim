@@ -7,6 +7,14 @@
 #   notepad abc-vim-install.ps1   # optional: review before running
 #   powershell -ExecutionPolicy Bypass -File abc-vim-install.ps1
 #
+# Options:
+#   -Force   Replace an existing abc-vim (or Vundle) checkout that has local
+#            changes or cannot fast-forward, instead of leaving it as-is. The
+#            old checkout is moved (or, when running from it, copied) to a
+#            timestamped .bak.<stamp> backup first. Example:
+#              powershell -ExecutionPolicy Bypass -File abc-vim-install.ps1 -Force
+#   -Help    Show this help and exit.
+#
 # This script is idempotent and safe to re-run. It will:
 #   1. Install missing dependencies (git, vim) via winget/choco/scoop.
 #   2. Clone (or update) the abc-vim files into %USERPROFILE%\vimfiles
@@ -14,10 +22,34 @@
 #   3. Place .vimrc in %USERPROFILE% (symlink if possible, otherwise a copy).
 #   4. Install (or update) Vundle.
 #   5. Install (and update) the plugins listed in the .vimrc.
+# Anything it replaces (.vimrc, .ideavimrc, a vimfiles that is not an abc-vim
+# checkout, or with -Force a checkout with local changes) is moved to a
+# timestamped .bak.<stamp> backup first; nothing is deleted.
 # ============================================================================
 
 #Requires -Version 5
+# CmdletBinding makes PowerShell reject unknown parameters instead of ignoring
+# them.
+[CmdletBinding()]
+param(
+    [switch]$Force,
+    [Alias('h')][switch]$Help
+)
 $ErrorActionPreference = 'Stop'
+
+if ($Help) {
+    Write-Host @'
+Usage: powershell -ExecutionPolicy Bypass -File install.ps1 [-Force] [-Help]
+
+Install or update ABC Vim in %USERPROFILE%\vimfiles.
+
+  -Force   Replace an abc-vim or Vundle checkout that has local changes or
+           cannot fast-forward (it is backed up to <dir>.bak.<stamp> first)
+           instead of leaving it as-is.
+  -Help    Show this help and exit.
+'@
+    exit 0
+}
 
 $RepoUrl   = if ($env:ABC_VIM_REPO) { $env:ABC_VIM_REPO } else { 'https://github.com/aaronbcarlisle/abc-vim.git' }
 $VundleUrl = 'https://github.com/VundleVim/Vundle.vim.git'
@@ -112,6 +144,62 @@ function Invoke-Git {
     return $true
 }
 
+# True when the checkout's branch tracks a remote branch. '@{u}' is quoted:
+# bare @{...} is a PowerShell hashtable.
+function Test-Upstream($Dir) {
+    $ErrorActionPreference = 'Continue'
+    & git -C $Dir rev-parse --verify -q '@{u}' 2>&1 | Out-Null
+    return ($LASTEXITCODE -eq 0)
+}
+
+# True when the checkout has uncommitted changes to tracked files, or commits
+# its upstream does not have. Untracked files are ignored: vim itself writes
+# some (netrw history, help tags).
+function Test-LocalChanges($Dir) {
+    $ErrorActionPreference = 'Continue'
+    $status = & git -C $Dir status --porcelain --untracked-files=no 2>$null
+    if ($LASTEXITCODE -eq 0 -and $status) { return $true }
+    if (-not (Test-Upstream $Dir)) { return $false }
+    $ahead = & git -C $Dir rev-list '@{u}..HEAD' 2>$null
+    return ($LASTEXITCODE -eq 0 -and [bool]$ahead)
+}
+
+# Fast-forward the git checkout at $Dir. With -Force, a checkout that has local
+# changes or cannot fast-forward is moved to $Dir.bak.<stamp> and re-cloned
+# from $Url; without it, it is left as-is.
+function Update-Checkout($Dir, $Url, $Name) {
+    if ($Force -and (Test-LocalChanges $Dir)) {
+        Write-Warn "$Dir has local changes - replacing it (-Force)."
+    } else {
+        & git -C $Dir pull --ff-only | Out-Host
+        if ($LASTEXITCODE -eq 0) { return }
+        if (-not $Force) {
+            Write-Warn "Could not fast-forward $Name; leaving it as-is (re-run with -Force to replace it)."
+            return
+        }
+        Write-Warn "Could not fast-forward $Name - replacing it (-Force)."
+    }
+    $backup = "$Dir.bak.$(Stamp)"
+    Write-Warn "Moving $Dir to $backup"
+    Move-Item -LiteralPath $Dir -Destination $backup
+    Invoke-Git @('clone', $Url, $Dir) | Out-Null
+}
+
+# -Force for the checkout this script is running from, which cannot be moved:
+# copy it to $Dir.bak.<stamp>, then hard-reset it to its upstream branch.
+function Reset-InPlace($Dir) {
+    if (-not (Test-Upstream $Dir)) {
+        Write-Warn "$Dir has no upstream branch to reset to; leaving it as-is."
+        return
+    }
+    $backup = "$Dir.bak.$(Stamp)"
+    Write-Warn "Copying $Dir to $backup, then resetting it to its upstream (-Force)."
+    Copy-Item -LiteralPath $Dir -Destination $backup -Recurse -Force -ErrorAction Stop
+    Invoke-Git @('-C', $Dir, 'fetch') -WarnOnFail "git fetch failed in $Dir; leaving it as-is (backup at $backup)." | Out-Null
+    if ($LASTEXITCODE -ne 0) { return }
+    Invoke-Git @('-C', $Dir, 'reset', '--hard', '@{u}') | Out-Null
+}
+
 # --- locate a local checkout -----------------------------------------------
 # If this script is being run from inside an abc-vim git checkout, install from
 # that working tree (picking up local/uncommitted edits) instead of cloning the
@@ -135,7 +223,20 @@ if ($ScriptDir) {
 # --- clone, copy, or update the vim files ----------------------------------
 if ($LocalSrc -and ((Resolve-Full $LocalSrc) -ieq (Resolve-Full $VimDir))) {
     Write-Info "Running from the canonical checkout at $VimDir - updating it in place."
-    Invoke-Git @('-C', $VimDir, 'pull', '--ff-only') -WarnOnFail "Could not fast-forward $VimDir; leaving it as-is." | Out-Null
+    if ($Force -and (Test-LocalChanges $VimDir)) {
+        Write-Warn "$VimDir has local changes."
+        Reset-InPlace $VimDir
+    } else {
+        & git -C $VimDir pull --ff-only | Out-Host
+        if ($LASTEXITCODE -ne 0) {
+            if ($Force) {
+                Write-Warn "Could not fast-forward $VimDir."
+                Reset-InPlace $VimDir
+            } else {
+                Write-Warn "Could not fast-forward $VimDir; leaving it as-is (re-run with -Force to reset it)."
+            }
+        }
+    }
 } elseif ($LocalSrc) {
     Write-Info "Installing from local checkout $LocalSrc"
     if (Test-Path $VimDir) {
@@ -148,7 +249,7 @@ if ($LocalSrc -and ((Resolve-Full $LocalSrc) -ieq (Resolve-Full $VimDir))) {
     Copy-Item -LiteralPath $LocalSrc -Destination $VimDir -Recurse -Force
 } elseif (Test-Path (Join-Path $VimDir '.git')) {
     Write-Info "$VimDir already exists - updating it instead of re-cloning."
-    Invoke-Git @('-C', $VimDir, 'pull', '--ff-only') -WarnOnFail "Could not fast-forward $VimDir; leaving it as-is." | Out-Null
+    Update-Checkout $VimDir $RepoUrl $VimDir
 } elseif (Test-Path $VimDir) {
     $backup = "$VimDir.bak.$(Stamp)"
     Write-Warn "$VimDir exists but is not an abc-vim git checkout - moving it to $backup"
@@ -201,7 +302,7 @@ if (Test-Path $TargetIdeaVimrc) {
 # --- install or update Vundle ----------------------------------------------
 if (Test-Path (Join-Path $VundleDir '.git')) {
     Write-Info 'Vundle already installed - updating it.'
-    Invoke-Git @('-C', $VundleDir, 'pull', '--ff-only') -WarnOnFail 'Could not fast-forward Vundle; leaving it as-is.' | Out-Null
+    Update-Checkout $VundleDir $VundleUrl 'Vundle'
 } elseif (Test-Path $VundleDir) {
     $backup = "$VundleDir.bak.$(Stamp)"
     Write-Warn "$VundleDir exists but is not a git checkout - moving it to $backup"
